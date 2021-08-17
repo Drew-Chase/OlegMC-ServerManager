@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
+using System.Timers;
+using TraceLd.MineStatSharp;
 
 namespace OlegMC.REST_API.Model
 {
@@ -68,7 +71,7 @@ namespace OlegMC.REST_API.Model
                     PlayersOnline = CurrentPlayerCount,
                     MaxPlayers = MaxPlayerCount,
                     PlanTier = ServerPlan.Name,
-                    CPU = _cpuUsage == null ? 0 : _cpuUsage.CPUUsageTotal,
+                    CPU = _cpuUsage,
                     RAM = ServerProcess == null || ServerProcess.HasExited ? 0 : Math.Round(ServerProcess.PrivateMemorySize64 / 1024.0 / 1024 / 1024, 2),
                     MaxRAM = this.Max_Ram,
                     Port = ServerProperties.GetByName("server-port") != null ? ServerProperties.GetByName("server-port").Value : string.Empty,
@@ -156,7 +159,25 @@ namespace OlegMC.REST_API.Model
         private int max_ram;
         private int java_version;
         private long _ramUsage = 0;
-        private GetCPUUsage _cpuUsage;
+        private double _cpuUsage
+        {
+            get
+            {
+                if (ServerProcess != null && !ServerProcess.HasExited)
+                    return Task.Run(async () =>
+                    {
+                        try
+                        {
+                            DateTime startTime = DateTime.UtcNow;
+                            TimeSpan startCpuUsage = ServerProcess.TotalProcessorTime;
+                            await Task.Delay(500);
+                            return Math.Round((ServerProcess.TotalProcessorTime - startCpuUsage).TotalMilliseconds / (Environment.ProcessorCount * (DateTime.UtcNow - startTime).TotalMilliseconds) * 100, 2);
+                        }
+                        catch { return 0; }
+                    }).Result;
+                return 0;
+            }
+        }
         private string java_path
         {
             get
@@ -261,15 +282,19 @@ namespace OlegMC.REST_API.Model
                         }
                     };
                     ServerProcess.Start();
-                    _cpuUsage = new();
-                    _cpuUsage.OnStartup(ServerProcess);
 
                     _ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 / 1024;
                     string[] search_cmds = { @"Starting minecraft server version", @"Loading for game Minecraft" };
+
+                    Timer timer = new(60 * 1000) { AutoReset = true, Enabled = true };
+                    timer.Elapsed += (s, e) => UpdatePlayersOnline();
+                    timer.Start();
+
                     ServerProcess.Exited += (s, o) =>
                     {
+                        timer.Stop();
                         CurrentStatus = ServerStatus.Offline;
-                        ServerProcess = null; _cpuUsage.OnClose();
+                        ServerProcess = null;
                         if (ConsoleLog.Contains(@"Error: A JNI error has occurred, please check your installation and try again"))
                         {
                             Java_Version = 16;
@@ -301,6 +326,11 @@ namespace OlegMC.REST_API.Model
                             string text = e.Data;
                             text = text.Replace(@"\u", "/u");
                             ConsoleLog.Add($"{text}");
+
+                            if (text.Contains("joined the game") || text.Contains("left the game"))
+                            {
+                                UpdatePlayersOnline();
+                            }
 
                             foreach (string cmd in search_cmds)
                             {
@@ -536,8 +566,6 @@ namespace OlegMC.REST_API.Model
                 }
             };
             ServerProcess.Start();
-            _cpuUsage = new();
-            _cpuUsage.OnStartup(ServerProcess);
             ConsoleLog = new();
             ServerProcess.OutputDataReceived += (s, e) =>
             {
@@ -554,7 +582,6 @@ namespace OlegMC.REST_API.Model
             {
                 CurrentStatus = ServerStatus.Offline;
                 File.Move(Path.Combine(ServerPath, "fabric-server-launch.jar"), Path.Combine(ServerPath, "start.jar"));
-                _cpuUsage.OnClose();
             };
             return true;
         }
@@ -592,13 +619,9 @@ namespace OlegMC.REST_API.Model
 
             ServerProcess.BeginOutputReadLine();
 
-            _cpuUsage = new();
-            _cpuUsage.OnStartup(ServerProcess);
-
             string jar = "";
             ServerProcess.Exited += (s, e) =>
             {
-                _cpuUsage.OnClose();
                 string[] jars = Directory.GetFiles(ServerPath, "forge*.jar", SearchOption.TopDirectoryOnly);
                 if (jars.Length == 1)
                 {
@@ -629,6 +652,24 @@ namespace OlegMC.REST_API.Model
         {
             if (!HasStartJar && HasInstallJar) File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
             return StartServer();
+        }
+
+        private void UpdatePlayersOnline()
+        {
+            if (ushort.TryParse(ServerProperties.GetByName("server-port").Value, out ushort port))
+            {
+                MineStat mc = new("127.0.0.1", port);
+                if (mc.ServerUp)
+                {
+                    if (ushort.TryParse(mc.CurrentPlayers, out ushort players))
+                    {
+                        CurrentPlayerCount = players;
+                        return;
+                    }
+                }
+            }
+            CurrentPlayerCount = 0;
+
         }
 
         #endregion
