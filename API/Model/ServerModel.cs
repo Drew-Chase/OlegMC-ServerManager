@@ -171,6 +171,7 @@ namespace OlegMC.REST_API.Model
                             DateTime startTime = DateTime.UtcNow;
                             TimeSpan startCpuUsage = ServerProcess.TotalProcessorTime;
                             await Task.Delay(500);
+                            if (ServerProcess == null || ServerProcess.HasExited || CurrentStatus == ServerStatus.Offline) return 0;
                             return Math.Round((ServerProcess.TotalProcessorTime - startCpuUsage).TotalMilliseconds / (Environment.ProcessorCount * (DateTime.UtcNow - startTime).TotalMilliseconds) * 100, 2);
                         }
                         catch { return 0; }
@@ -197,11 +198,7 @@ namespace OlegMC.REST_API.Model
         {
             ServerPlan = plan;
             ServerPath = Path.Combine(Global.ServersPath, plan.Username);
-            if (!Directory.Exists(ServerPath))
-            {
-                Directory.CreateDirectory(ServerPath);
-            }
-
+            Directory.CreateDirectory(ServerPath);
             ServerProperties = ServerPropertiesModel.Init(ServerPath);
             string olegIdentifier = Path.Combine(ServerPath, "olegmc.server");
             config = new(olegIdentifier, false);
