@@ -19,6 +19,7 @@
     <PackageReference Include="ChaseLabs.Configuration" Version="0.0.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="TraceLd.MineStatSharp" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
