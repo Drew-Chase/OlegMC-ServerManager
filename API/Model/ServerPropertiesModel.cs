@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace OlegMC.REST_API.Model
 {
@@ -24,13 +25,31 @@ namespace OlegMC.REST_API.Model
         /// <returns>All server properties</returns>
         private ServerPropertyModel[] Make()
         {
-            string[] lines = System.IO.File.ReadAllLines(PATH);
-            ServerPropertyModel[] value = new ServerPropertyModel[lines.Length];
-            for (int i = 0; i < value.Length; i++)
+            List<ServerPropertyModel> value = new();
+            try
             {
-                value[i] = ServerPropertyModel.DecodeFromLine(lines[i]);
+                string[] lines = File.ReadAllLines(PATH);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].StartsWith("#") || lines[i] == "")
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        value.Add(ServerPropertyModel.DecodeFromLine(lines[i]));
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
             }
-            return value;
+            catch
+            {
+            }
+            return value.ToArray();
         }
         /// <summary>
         /// Gets the server property based on the property name.
@@ -47,7 +66,7 @@ namespace OlegMC.REST_API.Model
                     return property;
                 }
             }
-            throw new System.IO.IOException("Server Property doesn't exist");
+            return null;
         }
         /// <summary>
         /// Initializes the <seealso cref="ServerPropertiesModel"/> using the server directory
@@ -56,7 +75,7 @@ namespace OlegMC.REST_API.Model
         /// <returns>Server Properties Object</returns>
         public static ServerPropertiesModel Init(string server_path)
         {
-            return new(System.IO.Path.Combine(server_path, "server.properties"));
+            return new(Path.Combine(server_path, "server.properties"));
         }
         #endregion
         #endregion
@@ -68,38 +87,72 @@ namespace OlegMC.REST_API.Model
         private ServerPropertiesModel(string path)
         {
             PATH = path;
-            if (!System.IO.File.Exists(path))
+            int port = ServersListModel.GetInstance.FindAvailablePort();
+            ServersListModel.GetInstance.Ports.Add(port);
+            if (!File.Exists(path))
             {
-                System.IO.File.CreateText(path);
+                StreamWriter writer = null;
+                try
+                {
+                    writer = File.CreateText(path);
+                    // Sets the default properties
+                    writer.WriteLine($"server-port={port}");
+                    writer.WriteLine("max-players=20");
+                }
+                catch (IOException)
+                {
+
+                }
+                finally
+                {
+                    if (writer != null)
+                    {
+                        writer.Flush();
+                        writer.Dispose();
+                        writer.Close();
+                    }
+                }
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Update()
+        {
+            Update(string.Empty, string.Empty);
+        }
+
+        public void Remove(string name)
+        {
+            Update(name, string.Empty, true);
+        }
+
         /// <summary>
         /// Updates an existing properties value or adds one
         /// </summary>
         /// <param name="name">Property Name</param>
         /// <param name="value">New Property Value</param>
-        public void Update(string name, string value)
+        public void Update(string name, object value, bool remove = false)
         {
-            string current = File.ReadAllText(PATH);
-            string[] lines = current.Split('\n');
             string after = string.Empty;
-            bool found = false;
-            foreach (string line in lines)
+            bool found = string.IsNullOrWhiteSpace(name);
+
+            foreach (ServerPropertyModel property in Properties)
             {
-                if (line.Split('=')[0].StartsWith(name))
+                if (!found && (GetByName(name) == null || name == property.Name))
                 {
-                    after += $"{name}={value}";
+                    if (!remove)
+                        after += $"{name}={value}\n";
                     found = true;
                 }
                 else
                 {
-                    after += line;
+                    after += $"{property.Name}={property.Value}\n";
                 }
-                after += "\n";
             }
             if (!found)
             {
-                after += $"{name}={value}";
+                after += $"{name}={value}\n";
             }
 
             File.WriteAllText(PATH, after);
@@ -120,6 +173,10 @@ namespace OlegMC.REST_API.Model
         /// The properties value.
         /// </summary>
         public string Value { get; private set; }
+        /// <summary>
+        /// If the property can be changed.
+        /// </summary>
+        public bool Protected { get; private set; }
         #endregion
         #endregion
         #region Functions
@@ -129,10 +186,11 @@ namespace OlegMC.REST_API.Model
         /// </summary>
         /// <param name="name">Name of the property</param>
         /// <param name="value">The properties value.</param>
-        public ServerPropertyModel(string name, string value)
+        public ServerPropertyModel(string name, string value, bool isProtected = false)
         {
             Name = name;
             Value = value;
+            Protected = isProtected;
         }
         /// <summary>
         /// Creates a <seealso cref="ServerPropertyModel"/> based on a line from the server.properties file
@@ -143,8 +201,27 @@ namespace OlegMC.REST_API.Model
         {
             string name = line.Split('=')[0].Replace("=", "");
             string value = line.Split('=')[1].Replace("=", "");
-            name = name.Replace("-", " ");
-            return new(name, value);
+            return new(name, value, (name.Equals("server-port") || name.Equals("server-ip")));
+        }
+        public override bool Equals(object obj)
+        {
+            if (!obj.GetType().Equals(typeof(ServerPropertyModel)))
+            {
+                return false;
+            }
+
+            ServerPropertyModel model = (ServerPropertyModel)obj;
+            if (model.Name.ToLower().Equals(Name.ToLower()))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
         #endregion
         #endregion

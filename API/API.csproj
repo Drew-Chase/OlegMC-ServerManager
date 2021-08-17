@@ -5,10 +5,39 @@
     <UserSecretsId>1f38da8b-d084-4f41-94fa-87ffad88f74a</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <RootNamespace>OlegMC.REST_API</RootNamespace>
+    <PackageId>olegmc</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Drew Chase</Authors>
+    <Company>LFInteractive LLC</Company>
+    <Product>OlegMC</Product>
+    <AssemblyName>OlegMC</AssemblyName>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ChaseLabs.Configuration" Version="0.0.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Runtime\Win64.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Runtime\Linux64.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Runtime\Win64.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

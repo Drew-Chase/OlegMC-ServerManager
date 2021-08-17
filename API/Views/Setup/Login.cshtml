@@ -1,0 +1,174 @@
+﻿@page
+@model OlegMC.REST_API.View.LoginModel
+@{
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - OlegMC for Openbox Hosting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400;700&display=swap" rel="stylesheet">
+
+    <link rel="shortcut icon" href="https://openboxhosting.com/assets/images/Icon.svg">
+    <style>
+        body {
+            color: white;
+            background-color: hsl(0, 0%, 5%);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        input {
+            margin-top: 5px;
+            margin-bottom: 20px;
+            background-color: white;
+            border: none;
+            padding: 15px;
+            color: black;
+        }
+
+            input:focus {
+                outline: none;
+            }
+
+        label {
+            transform: translateY(0px) translateX(20px);
+            transition: transform .5s, color .5s;
+            color: white;
+        }
+
+            label.isPlaceholder {
+                color: black;
+                transform: translateY(38px) translateX(20px);
+                cursor: text;
+            }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+            padding: 30px;
+            min-width: 100px;
+            max-width: 700px;
+        }
+
+        h1 {
+            margin-top: 15px;
+            font-size: 48px;
+        }
+
+        p#subtitle {
+            font-size: 32px;
+            margin-bottom: 0px;
+        }
+
+        button {
+            color: white;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 0px;
+            padding: 15px 25px;
+            margin: 10px;
+            transition: box-shadow .5s, background .5s;
+            background-color: #E43F3F;
+            box-shadow: #B33131 0px 6px;
+            text-decoration: none;
+        }
+
+            button:hover,
+            button:focus {
+                cursor: pointer;
+                background-color: #B33131;
+                box-shadow: #8C2626 0px 3px;
+            }
+
+        @@media (max-width: 620px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            p#subtitle {
+                font-size: 18px;
+            }
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <main>
+        @if (OlegMC.REST_API.Data.Global.IsLoggedIn)
+        {
+            <h1>Your Logged in.</h1>
+            <p>
+                Access your server via the <a href="https://myaccount.openboxhosting.com">Control Panel</a>
+            </p>
+        }
+        else
+        {
+            <p id="subtitle">Login</p>
+            <h1>OlegMC - Openbox Hosting</h1>
+            <form>
+                <label for="email-input" class="isPlaceholder">Email</label>
+                <input type="email" name="email" id="email-input" required>
+                <label for="password-input" class="isPlaceholder">Password</label>
+                <input type="password" name="password" id="password-input" required>
+                <button type="submit">Login</button>
+            </form>
+        }
+    </main>
+
+    <script>
+        (() => {
+            $("form").on("submit", event => {
+                event.preventDefault();
+                let username = $("input[type=email]")[0].value
+                let password = $("input[type=password]")[0].value
+                let port = window.location.port != "" ? window.location.port : window.location.protocol == "http" ? 80 : 443;
+                if (username != "" && password != "") {
+
+                    let temp = document.createElement("div");
+                    temp.hidden = true;
+                    temp.id = "temp";
+                    $("main")[0].prepend(temp);
+                    $("#temp").load(`/login/${username}/${password}/${port}/${window.location.protocol}`);
+                    temp.remove();
+                    $("button[type=submit]")[0].hidden = true;
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            });
+
+            $("input").on("focusin", event => removePlaceholder(event))
+            $("input").on("focusout", event => checkIsPlaceholder(event.target))
+
+            function checkIsPlaceholder(input) {
+                let label = $(`label[for="${input.id}"]`)[0];
+                if (input.value == "") {
+                    label.classList.add('isPlaceholder')
+                } else {
+                    label.classList.remove('isPlaceholder')
+                }
+            }
+
+            function removePlaceholder(event) {
+                $(`label[for="${event.target.id}"]`)[0].classList.remove('isPlaceholder')
+            }
+        }).call();
+    </script>
+</body>
+
+</html>

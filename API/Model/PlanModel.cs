@@ -13,7 +13,7 @@
         /// The ammount of ram allocated to each plan.
         /// </summary>
         public virtual int RAM { get; }
-        public virtual int MaxBackups { get; }
+        public virtual int MaxBackups { get; set; }
 
         /// <summary>
         /// The user accessing the server console
@@ -28,6 +28,7 @@
         {
             return plan.ToLower() switch
             {
+                "byos" => new BYOSPlan(username),
                 "basic" => new BasicPlan(username),
                 "intermidate" => new IntermidatePlan(username),
                 "advanced" => new AdvancedPlan(username),
@@ -35,6 +36,19 @@
                 "elite" => new ElitePlan(username),
                 _ => throw new System.Exception("No Plan was found"),
             };
+        }
+    }
+    /// <summary>
+    /// A basic plan
+    /// </summary>
+    public class BYOSPlan : PlanModel
+    {
+        public override string Name => "BYOS";
+        public override int RAM => 4;
+        public override int MaxBackups { get; set; }
+        public BYOSPlan(string username) : base(username)
+        {
+
         }
     }
     /// <summary>
