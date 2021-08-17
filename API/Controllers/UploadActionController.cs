@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
 using System.IO;
@@ -32,11 +33,13 @@ namespace OlegMC.REST_API.Controllers
             if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
 
-                FileStream stream = new(Path.Combine(server.ServerPath, "start.jar"), FileMode.Create);
+                FileStream stream = new(Path.Combine(Global.GetUniqueTempFolder(username), "start.jar"), FileMode.Create);
                 file.CopyTo(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
+                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "start.jar"), Path.Combine(server.ServerPath, "start.jar"), true);
+                Global.DestroyUniqueTempFolder(username);
                 return Ok();
             }
             else
@@ -63,11 +66,13 @@ namespace OlegMC.REST_API.Controllers
             server.ServerType = (ServerType)Enum.Parse(typeof(ServerType), loader);
             if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
-                FileStream stream = new(Path.Combine(server.ServerPath, "installer.jar"), FileMode.Create);
+                FileStream stream = new(Path.Combine(Global.GetUniqueTempFolder(username), "installer.jar"), FileMode.Create);
                 file.CopyTo(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
+
+                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "installer.jar"), Path.Combine(server.ServerPath, "installer.jar"), true);
 
                 server.ForceScan();
                 if (server.HasInstallJar)
@@ -81,6 +86,7 @@ namespace OlegMC.REST_API.Controllers
                         }
                     }
                 }
+                Global.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded and Installed" });
             }
             else
@@ -112,28 +118,32 @@ namespace OlegMC.REST_API.Controllers
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
-                string temp_dir = Path.Combine(server.ServerPath, "tmp");
+                string temp_dir = Path.Combine(Global.GetUniqueTempFolder(username), "mods");
                 Directory.CreateDirectory(temp_dir);
                 System.IO.Compression.ZipFile.ExtractToDirectory(temp_zip, temp_dir, true);
                 string[] jars = Directory.GetFiles(temp_dir, "*.jar", SearchOption.TopDirectoryOnly);
                 foreach (string jar in jars)
                 {
-                    System.IO.File.Move(jar, Path.Combine(server.ServerPath, "mods", new FileInfo(jar).Name));
+                    System.IO.File.Move(jar, Path.Combine(server.ServerPath, "mods", new FileInfo(jar).Name), true);
                 }
                 if (System.IO.File.Exists(temp_zip))
                 {
                     System.IO.File.Delete(temp_zip);
                 }
 
-                Directory.Delete(temp_dir, true);
+                Global.DestroyUniqueTempFolder(username);
             }
             else if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
-                FileStream stream = new(Path.Combine(server.ServerPath, "mods", file.FileName), FileMode.Create);
+                string temp_file = Path.Combine(Global.GetUniqueTempFolder(username), "mods", file.FileName);
+                FileStream stream = new(temp_file, FileMode.Create);
                 await file.CopyToAsync(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
+                string mod_dir = Path.Combine(server.ServerPath, "mods");
+                Directory.CreateDirectory(mod_dir);
+                System.IO.File.Move(temp_file, mod_dir, true);
             }
             else
             {
