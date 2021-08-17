@@ -132,8 +132,8 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
 
-            server.StopServer(StopMethod.Normal);
-            BackupListModel.CreateManualBackup(server);
+            if (server.StopServer(StopMethod.Normal))
+                BackupListModel.CreateManualBackup(server);
             return Ok();
         }
 
