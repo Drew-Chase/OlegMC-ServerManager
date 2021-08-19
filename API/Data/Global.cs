@@ -1,14 +1,9 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
-using System.Timers;
 
 namespace OlegMC.REST_API.Data
 {
@@ -55,7 +50,11 @@ namespace OlegMC.REST_API.Data
         public static string GetUniqueTempFolder(string username)
         {
             string path = Path.Combine(Root, "temp", username);
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
             return path;
         }
         public static void DestroyUniqueTempFolder(string username)
@@ -108,13 +107,15 @@ namespace OlegMC.REST_API.Data
         {
             get
             {
-                var host = Dns.GetHostEntry(Dns.GetHostName());
-                foreach (var ip in host.AddressList)
+                IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (IPAddress ip in host.AddressList)
                 {
                     if (ip.AddressFamily == AddressFamily.InterNetwork)
                     {
                         if (ip.ToString().StartsWith("192.168"))
+                        {
                             return ip.ToString();
+                        }
                     }
                 }
                 throw new Exception("No network adapters with an IPv4 address in the system!");
@@ -158,9 +159,16 @@ namespace OlegMC.REST_API.Data
         {
             string cfg = Path.Combine(Root, "auth");
             if (!File.Exists(cfg))
+            {
                 return;
+            }
+
             ConfigManager manager = new(cfg, true);
-            if (manager.GetConfigByKey("token") == null || manager.GetConfigByKey("local") == null || manager.GetConfigByKey("remote") == null || manager.GetConfigByKey("port") == null) return;
+            if (manager.GetConfigByKey("token") == null || manager.GetConfigByKey("local") == null || manager.GetConfigByKey("remote") == null || manager.GetConfigByKey("port") == null)
+            {
+                return;
+            }
+
             string token = manager.GetConfigByKey("token").Value;
             string localCFG = manager.GetConfigByKey("local").Value;
             string remoteCFG = manager.GetConfigByKey("remote").Value;
@@ -190,7 +198,9 @@ namespace OlegMC.REST_API.Data
         public static void LogOut()
         {
             if (IsLoggedIn)
+            {
                 File.Delete(Path.Combine(Root, "auth"));
+            }
         }
     }
 }

@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OlegMC.REST_API.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Controllers
 {
