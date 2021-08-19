@@ -4,8 +4,6 @@ using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 namespace OlegMC.REST_API
@@ -65,7 +63,7 @@ namespace OlegMC.REST_API
             const int SW_HIDE = 0;
             const int SW_SHOW = 5;
 
-            var handle = GetConsoleWindow();
+            IntPtr handle = GetConsoleWindow();
             ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
         }
 

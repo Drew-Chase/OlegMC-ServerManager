@@ -151,5 +151,32 @@ namespace OlegMC.REST_API.Controllers
             }
             return Ok();
         }
+
+        [HttpPost("{username}/datapack"), DisableRequestSizeLimit]
+        public IActionResult UploadDatapack(string username, IFormFile file)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "datapacks")).FullName;
+            if (file.ContentType == "application/zip")
+            {
+                string file_path = Path.Combine(temp_path, file.FileName);
+                FileStream stream = new(file_path, FileMode.Create);
+                file.CopyTo(stream);
+                stream.Flush();
+                stream.Dispose();
+                stream.Close();
+                DatapackListModel.GetServerInstance(server).Add(file_path);
+                Global.DestroyUniqueTempFolder(username);
+                return Ok(new { message = "Uploaded Successfully" });
+            }
+            else
+            {
+                return BadRequest(new { message = "File needs to be a zip archive" });
+            }
+        }
     }
 }

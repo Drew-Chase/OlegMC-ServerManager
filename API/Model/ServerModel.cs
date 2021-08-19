@@ -64,7 +64,10 @@ namespace OlegMC.REST_API.Model
             get
             {
                 if (ServerProcess != null && !ServerProcess.HasExited)
+                {
                     ServerProcess.Refresh();
+                }
+
                 return new
                 {
                     Status = CurrentStatus.ToString(),
@@ -73,7 +76,7 @@ namespace OlegMC.REST_API.Model
                     PlanTier = ServerPlan.Name,
                     CPU = _cpuUsage,
                     RAM = ServerProcess == null || ServerProcess.HasExited ? 0 : Math.Round(ServerProcess.PrivateMemorySize64 / 1024.0 / 1024 / 1024, 2),
-                    MaxRAM = this.Max_Ram,
+                    MaxRAM = Max_Ram,
                     Port = ServerProperties.GetByName("server-port") != null ? ServerProperties.GetByName("server-port").Value : string.Empty,
                     IsModded = Directory.Exists(Path.Combine(ServerPath, "mods")),
                     IsPlugin = Directory.Exists(Path.Combine(ServerPath, "plugins")),
@@ -98,7 +101,10 @@ namespace OlegMC.REST_API.Model
             get
             {
                 if (ServerProperties.GetByName("max-players") != null && int.TryParse(ServerProperties.GetByName("max-players").Value, out int v))
+                {
                     return v;
+                }
+
                 return 20;
             }
         }
@@ -129,10 +135,7 @@ namespace OlegMC.REST_API.Model
         public ConfigManager config { get; private set; }
         public int Java_Version
         {
-            get
-            {
-                return java_version;
-            }
+            get => java_version;
             set
             {
                 config.GetConfigByKey("java").Value = value.ToString();
@@ -141,10 +144,7 @@ namespace OlegMC.REST_API.Model
         }
         public int Max_Ram
         {
-            get
-            {
-                return max_ram;
-            }
+            get => max_ram;
             set
             {
                 if (ServerPlan.Name == "BYOS")
@@ -164,6 +164,7 @@ namespace OlegMC.REST_API.Model
             get
             {
                 if (ServerProcess != null && !ServerProcess.HasExited)
+                {
                     return Task.Run(async () =>
                     {
                         try
@@ -171,11 +172,17 @@ namespace OlegMC.REST_API.Model
                             DateTime startTime = DateTime.UtcNow;
                             TimeSpan startCpuUsage = ServerProcess.TotalProcessorTime;
                             await Task.Delay(500);
-                            if (ServerProcess == null || ServerProcess.HasExited || CurrentStatus == ServerStatus.Offline) return 0;
+                            if (ServerProcess == null || ServerProcess.HasExited || CurrentStatus == ServerStatus.Offline)
+                            {
+                                return 0;
+                            }
+
                             return Math.Round((ServerProcess.TotalProcessorTime - startCpuUsage).TotalMilliseconds / (Environment.ProcessorCount * (DateTime.UtcNow - startTime).TotalMilliseconds) * 100, 2);
                         }
                         catch { return 0; }
                     }).Result;
+                }
+
                 return 0;
             }
         }
@@ -226,7 +233,7 @@ namespace OlegMC.REST_API.Model
 
         public void DownloadServer(string version)
         {
-            using (var client = new System.Net.WebClient())
+            using (System.Net.WebClient client = new System.Net.WebClient())
             {
                 switch (ServerType)
                 {
@@ -306,9 +313,14 @@ namespace OlegMC.REST_API.Model
                                 int release = int.Parse(version.Split('.')[0].Replace(".", ""));
                                 int major = int.Parse(version.Split('.')[1].Replace(".", ""));
                                 if (major >= 16)
+                                {
                                     Java_Version = 16;
+                                }
                                 else
+                                {
                                     Java_Version = 8;
+                                }
+
                                 StartServer();
                                 break;
                             }
@@ -461,7 +473,11 @@ namespace OlegMC.REST_API.Model
             timer.Start();
             timer.Elapsed += (s, e) =>
             {
-                if (ServerProcess == null) return;
+                if (ServerProcess == null)
+                {
+                    return;
+                }
+
                 if (!ServerProcess.HasExited && ittertions < 2)
                 {
                     superFailed = false;
@@ -539,7 +555,11 @@ namespace OlegMC.REST_API.Model
         /// <returns>if the server was installed correctly.</returns>
         private bool InstallSpigot()
         {
-            if (!HasStartJar && HasInstallJar) File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
+            if (!HasStartJar && HasInstallJar)
+            {
+                File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
+            }
+
             return StartServer();
         }
         /// <summary>
@@ -647,7 +667,11 @@ namespace OlegMC.REST_API.Model
         /// <returns>if the server was installed correctly.</returns>
         private bool InstallVanilla()
         {
-            if (!HasStartJar && HasInstallJar) File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
+            if (!HasStartJar && HasInstallJar)
+            {
+                File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
+            }
+
             return StartServer();
         }
 

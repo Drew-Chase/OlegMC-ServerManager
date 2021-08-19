@@ -133,7 +133,10 @@ namespace OlegMC.REST_API.Controllers
             }
 
             if (server.StopServer(StopMethod.Normal))
+            {
                 BackupListModel.CreateManualBackup(server);
+            }
+
             return Ok();
         }
 
@@ -174,7 +177,10 @@ namespace OlegMC.REST_API.Controllers
 
             BackupListModel.CreateManualBackup(server, full);
             if (intervals.HasValue)
+            {
                 server.Backups.CreateBackupSchedule(intervals.Value);
+            }
+
             return Ok(new { message = "Backup Created!" });
         }
         /// <summary>
@@ -291,7 +297,11 @@ namespace OlegMC.REST_API.Controllers
             string levelName = server.ServerProperties.GetByName("level-name").Value;
             levelName = string.IsNullOrWhiteSpace(levelName) ? "world" : levelName;
             string zipArchive = System.IO.Path.Combine(Global.GetUniqueTempFolder(username), "download-world.zip");
-            if (System.IO.File.Exists(zipArchive)) System.IO.File.Delete(zipArchive);
+            if (System.IO.File.Exists(zipArchive))
+            {
+                System.IO.File.Delete(zipArchive);
+            }
+
             System.IO.Compression.ZipFile.CreateFromDirectory(System.IO.Path.Combine(server.ServerPath, levelName), zipArchive);
             return new FileStreamResult(new System.IO.FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
         }
@@ -304,7 +314,11 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
             string zipArchive = System.IO.Path.Combine(Global.GetUniqueTempFolder(username), "download-server.zip");
-            if (System.IO.File.Exists(zipArchive)) System.IO.File.Delete(zipArchive);
+            if (System.IO.File.Exists(zipArchive))
+            {
+                System.IO.File.Delete(zipArchive);
+            }
+
             System.IO.Compression.ZipFile.CreateFromDirectory(server.ServerPath, zipArchive);
             return new FileStreamResult(new System.IO.FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
         }
@@ -328,15 +342,28 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
             if (index.HasValue)
+            {
                 System.IO.File.Delete(BackupListModel.GetBackups(server)[index.Value - 1].FilePath);
+            }
             else
             {
-                foreach (var backup in BackupListModel.GetBackups(server))
+                foreach (BackupModel backup in BackupListModel.GetBackups(server))
                 {
                     System.IO.File.Delete(backup.FilePath);
                 }
             }
             return Ok(new { message = "Removed Successfully!" });
+        }
+        [HttpGet("{username}/datapack/remove/{index?}")]
+        public IActionResult RemoveDatapack(string username, int? index)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            DatapackListModel.GetServerInstance(server).Remove(index);
+            return Ok(new { message = $"Datapack(s) were successfully removed" });
         }
     }
 }

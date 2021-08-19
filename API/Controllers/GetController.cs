@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
-using System;
 using System.IO;
 
 namespace OlegMC.REST_API.Controllers
@@ -89,7 +87,10 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
             if (index.HasValue)
+            {
                 return new JsonResult(BackupListModel.GetBackups(server)[index.Value - 1]);
+            }
+
             return new JsonResult(new
             {
                 enabled = server.config.GetConfigByKey("backups_enabled").ParseBoolean(),
@@ -97,6 +98,38 @@ namespace OlegMC.REST_API.Controllers
                 intervals = server.config.GetConfigByKey("backup_intervals").ParseInt(),
                 backups = BackupListModel.GetBackups(server)
             });
+        }
+        [HttpGet("{username}/datapack/{index?}")]
+        public IActionResult GetDatapacks(string username, int? index)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            if (index.HasValue)
+            {
+
+                try
+                {
+                    return new JsonResult(DatapackListModel.GetServerInstance(server).Get(index.Value));
+                }
+                catch (IOException e)
+                {
+                    return BadRequest(new { message = $"ERROR: {e.Message}" });
+                }
+            }
+            else
+            {
+                try
+                {
+                    return new JsonResult(DatapackListModel.GetServerInstance(server).Datapacks);
+                }
+                catch (IOException e)
+                {
+                    return BadRequest(new { message = $"ERROR: {e.Message}" });
+                }
+            }
         }
     }
 }

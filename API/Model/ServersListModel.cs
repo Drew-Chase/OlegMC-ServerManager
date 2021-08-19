@@ -1,6 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using OlegMC.REST_API.Data;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -41,7 +40,10 @@ namespace OlegMC.REST_API.Model
         /// <returns></returns>
         public int FindAvailablePort(int port = 0)
         {
-            if (Ports.Count == 0) return 1;
+            if (Ports.Count == 0)
+            {
+                return 1;
+            }
 
             int[] protectedPorts = { 22, 80, 5076 };
             port = port == 0 ? Ports[^1] + 1 : port + 1;
@@ -57,11 +59,13 @@ namespace OlegMC.REST_API.Model
             for (int i = 0; i < files.Length; i++)
             {
                 string text = System.IO.File.ReadAllText(files[i]);
-                var config = new ConfigManager(files[i], false);
+                ConfigManager config = new ConfigManager(files[i], false);
                 ServerModel server = new(PlanModel.GetBasedOnName(config.GetConfigByKey("plan") == null ? "byos" : config.GetConfigByKey("plan").Value, config.GetConfigByKey("username").Value));
                 ServerPropertyModel property = server.ServerProperties.GetByName("server-port");
                 if (property != null)
+                {
                     Ports.Add(int.Parse(property.Value));
+                }
                 else
                 {
                     int port = FindAvailablePort();

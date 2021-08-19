@@ -142,7 +142,10 @@ namespace OlegMC.REST_API.Model
                 if (!found && (GetByName(name) == null || name == property.Name))
                 {
                     if (!remove)
+                    {
                         after += $"{name}={value}\n";
+                    }
+
                     found = true;
                 }
                 else
