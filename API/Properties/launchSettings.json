@@ -10,7 +10,7 @@
   "profiles": {
     "Console Standalone": {
       "commandName": "Project",
-      "commandLineArgs": "--withConsole",
+      "commandLineArgs": "-show",
       "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
