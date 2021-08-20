@@ -37,10 +37,9 @@ namespace OlegMC.REST_API.Model
         {
             if (id.HasValue)
             {
-
                 foreach (DatapackModel pack in Datapacks)
                 {
-                    if (pack.ID == id)
+                    if (pack.ID == id.Value - 1)
                     {
                         if (File.Exists(pack.Path))
                         {
@@ -66,7 +65,10 @@ namespace OlegMC.REST_API.Model
         {
             foreach (DatapackModel pack in Datapacks)
             {
-                if (pack.ID == id) return pack;
+                if (pack.ID == id)
+                {
+                    return pack;
+                }
             }
             throw new IOException("Datapack doesn't exist");
         }
