@@ -226,6 +226,21 @@ namespace OlegMC.REST_API.Model
             AcceptEULA();
             ForceScan();
             Backups = new(this, true);
+            if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
+            {
+                Task.Run(async () =>
+                {
+                    //await Networking.ClosePort(port);
+                    if (!await Networking.IsPortOpen(port))
+                    {
+                        await Networking.OpenPort(port);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"port {port} is already open");
+                    }
+                }).Wait();
+            }
         }
 
         #region Functions
