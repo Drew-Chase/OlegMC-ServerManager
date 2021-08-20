@@ -22,7 +22,7 @@ namespace OlegMC.REST_API.Controllers
         /// <param name="username">Users Username</param>
         /// <param name="file">File Object from the HTML Form</param>
         /// <returns></returns>
-        [HttpPost("{username}/server"), DisableRequestSizeLimit]
+        [HttpPost("{username}/server-jar"), DisableRequestSizeLimit]
         public IActionResult UploadServerJar(string username, IFormFile file)
         {
             ServerModel server = ServersListModel.GetInstance.GetServer(username);
@@ -170,6 +170,87 @@ namespace OlegMC.REST_API.Controllers
                 stream.Dispose();
                 stream.Close();
                 DatapackListModel.GetServerInstance(server).Add(file_path);
+                Global.DestroyUniqueTempFolder(username);
+                return Ok(new { message = "Uploaded Successfully" });
+            }
+            else
+            {
+                return BadRequest(new { message = "File needs to be a zip archive" });
+            }
+        }
+
+
+        [HttpPost("{username}/world"), DisableRequestSizeLimit]
+        public IActionResult UploadWorld(string username, IFormFile file)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "world")).FullName;
+            if (file.ContentType == "application/zip")
+            {
+                string file_path = Path.Combine(temp_path, file.FileName);
+                FileStream stream = new(file_path, FileMode.Create);
+                file.CopyTo(stream);
+                stream.Flush();
+                stream.Dispose();
+                stream.Close();
+                if (server.ServerProperties.GetByName("level-name") != null)
+                {
+                    if (Directory.Exists(Path.Combine(server.ServerPath, server.ServerProperties.GetByName("level-name").Value)))
+                    {
+                        Directory.Delete(Path.Combine(server.ServerPath, server.ServerProperties.GetByName("level-name").Value), true);
+                    }
+                }
+
+                string unzip = Directory.CreateDirectory(Path.Combine(server.ServerPath, new FileInfo(file_path).Name.Replace(new FileInfo(file_path).Extension, "").Replace(".", ""))).FullName;
+                string levelName = new DirectoryInfo(unzip).Name;
+                System.IO.Compression.ZipFile.ExtractToDirectory(file_path, unzip, true);
+                server.ServerProperties.Update("level-name", levelName);
+                Global.DestroyUniqueTempFolder(username);
+                return Ok(new { message = "Uploaded Successfully" });
+            }
+            else
+            {
+                return BadRequest(new { message = "File needs to be a zip archive" });
+            }
+        }
+
+
+        [HttpPost("{username}/server"), DisableRequestSizeLimit]
+        public IActionResult UploadServer(string username, IFormFile file)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "server")).FullName;
+            if (file.ContentType == "application/zip")
+            {
+                string file_path = Path.Combine(temp_path, file.FileName);
+                FileStream stream = new(file_path, FileMode.Create);
+                file.CopyTo(stream);
+                stream.Flush();
+                stream.Dispose();
+                stream.Close();
+                int port = int.Parse(server.ServerProperties.GetByName("server-port").Value);
+                System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), true);
+
+                if (Directory.Exists(server.ServerPath))
+                {
+                    Directory.Delete(server.ServerPath, true);
+                }
+
+                string unzip = Directory.CreateDirectory(server.ServerPath).FullName;
+                System.IO.Compression.ZipFile.ExtractToDirectory(file_path, unzip, true);
+
+                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
+                server.AcceptEULA();
+                server.ServerProperties.Update("server-port", port);
+
                 Global.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded Successfully" });
             }
