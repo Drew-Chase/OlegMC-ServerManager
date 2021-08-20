@@ -21,3 +21,9 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Release
+        path: /home/runner/work/OlegMC-ServerManager/OlegMC-ServerManager/API/bin/Debug/net5.0/
+        
