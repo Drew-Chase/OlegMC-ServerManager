@@ -2,6 +2,7 @@
 using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
+using System.IO;
 
 namespace OlegMC.REST_API.Controllers
 {
@@ -364,6 +365,39 @@ namespace OlegMC.REST_API.Controllers
             }
             DatapackListModel.GetServerInstance(server).Remove(index);
             return Ok(new { message = $"Datapack(s) were successfully removed" });
+        }
+
+        [HttpGet("{username}/download/datapack/{index}")]
+        public IActionResult DownloadDatapack(string username, int index)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            return new FileStreamResult(new System.IO.FileStream(DatapackListModel.GetServerInstance(server).Datapacks[index - 1].Path, System.IO.FileMode.Open), "application/zip");
+        }
+        [HttpGet("{username}/clean")]
+        public IActionResult CleanServer(string username)
+        {
+            ServerModel server = ServersListModel.GetInstance.GetServer(username);
+            if (server == null)
+            {
+                return BadRequest(new { message = $"User {username} does NOT have a server created!" });
+            }
+            Global.GetUniqueTempFolder(username);
+            int port = int.Parse(server.ServerProperties.GetByName("server-port").Value);
+            System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), true);
+            if (Directory.Exists(server.ServerPath))
+            {
+                Directory.Delete(server.ServerPath, true);
+            }
+
+            System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
+            server.AcceptEULA();
+            server.ServerProperties.Update("server-port", port);
+            Global.DestroyUniqueTempFolder(username);
+            return Ok(new { message = "Cleaned Successfully" });
         }
     }
 }
