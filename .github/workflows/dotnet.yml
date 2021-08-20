@@ -5,10 +5,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  build-windows:
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET
@@ -24,6 +22,5 @@ jobs:
     - name: Build Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Release
+        name: Windows
         path: /home/runner/work/OlegMC-ServerManager/OlegMC-ServerManager/API/bin/Debug/net5.0/
-        
