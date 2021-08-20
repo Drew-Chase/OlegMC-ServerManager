@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
-using System.IO;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace OlegMC.REST_API
@@ -12,38 +12,60 @@ namespace OlegMC.REST_API
     {
         public static void Main(string[] args)
         {
+            if (OperatingSystem.IsWindows())
+            {
+                ModifyWindow(false);
+                Console.Title = "OlegMC - Server Manager";
+            }
+            if (!Networking.IsPortOpen(Global.API_PORT).Result)
+            {
+                Networking.OpenPort(Global.API_PORT).Wait();
+            }
+
             if (args.Length != 0)
             {
                 for (int i = 0; i < args.Length; i++)
                 {
                     switch (args[i])
                     {
-                        case "--updateServer":
+                        case "-updateServer":
                             Global.SyncInfoWithServer(true);
                             continue;
-                        case "--withConsole":
+                        case "-show":
                             if (OperatingSystem.IsWindows())
                             {
                                 ModifyWindow(true);
                             }
                             continue;
+                        case "-genRuntime":
+                            Global.GenRuntime(true);
+                            continue;
+                        case "-firewall":
+                            FirewallManager.FirewallCom firewall = new();
+                            firewall.AddAuthorizeApp(
+                                new("OlegMC - Server Manager", Global.ExecutingBinary)
+                                {
+                                    Enabled = true
+                                });
+                            firewall.AddAuthorizeApp(
+                                new("OlegMC - Server Manager (java 16 runtime)", Global.GetRuntimeExecutable(Global.JavaVersion.Latest))
+                                {
+                                    Enabled = true
+                                });
+
+                            firewall.AddAuthorizeApp(
+                                new("OlegMC - Server Manager (java 8 runtime)", Global.GetRuntimeExecutable(Global.JavaVersion.Legacy))
+                                {
+                                    Enabled = true
+                                });
+                            Environment.Exit(0);
+                            continue;
+                        default:
+                            continue;
                     }
                 }
             }
-            else
-            {
-                if (OperatingSystem.IsWindows())
-                {
-                    ModifyWindow(false);
-                }
-            }
-
-            string path = Path.Combine(Global.Runtime, 8.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
-
-            if (!File.Exists(path))
-            {
-                Global.GenRuntime();
-            }
+            Global.GenRuntime();
             Global.SyncInfoWithServer();
             CreateHostBuilder(args).Build().Run();
             AppDomain.CurrentDomain.ProcessExit += (s, e) =>
@@ -67,6 +89,23 @@ namespace OlegMC.REST_API
             ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
         }
 
+        public static void AddToFirewall()
+        {
+            Console.WriteLine("Adding Firewall Rule");
+            Process process = new()
+            {
+                StartInfo = new()
+                {
+                    FileName = Global.ExecutingBinary,
+                    Arguments = "-firewall",
+                    Verb = "runas",
+                    UseShellExecute = true,
+                }
+            };
+            process.Start();
+            process.WaitForExit();
+        }
+
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
@@ -75,7 +114,7 @@ namespace OlegMC.REST_API
                 {
                     webBuilder.UseKestrel(kestral =>
                     {
-                        kestral.ListenAnyIP(5077);
+                        kestral.ListenAnyIP(Global.API_PORT);
                     }).UseStartup<Startup>();
                 });
         }

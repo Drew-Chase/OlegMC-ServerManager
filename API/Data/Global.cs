@@ -12,7 +12,8 @@ namespace OlegMC.REST_API.Data
     /// </summary>
     public static class Global
     {
-
+        public static int API_PORT => 5077;
+        public static string ExecutingBinary => Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, $"{AppDomain.CurrentDomain.FriendlyName}{(OperatingSystem.IsWindows() ? ".exe" : "")}");
         /// <summary>
         /// The root directory of the application
         /// </summary>
@@ -78,13 +79,43 @@ namespace OlegMC.REST_API.Data
             }
         }
 
-
-        public static void GenRuntime()
+        public enum JavaVersion
         {
-            Console.WriteLine("Extracting Runtime Binaries");
-            string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
-            System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, "Runtime", $"{os}.zip"), Runtime);
-            Console.WriteLine("Done Extracting Runtime Binaries");
+            Latest,
+            Legacy
+        }
+
+        public static string GetRuntimeExecutable(JavaVersion version)
+        {
+            return GetRuntimeExecutable(version == JavaVersion.Latest ? 16 : 8);
+        }
+
+        public static string GetRuntimeExecutable(int version)
+        {
+            string path = Path.Combine(Runtime, version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+            if (!File.Exists(path))
+            {
+                GenRuntime();
+            }
+            return path;
+        }
+
+
+        public static void GenRuntime(bool force = false)
+        {
+            string leg = Path.Combine(Runtime, 8.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+            string lat = Path.Combine(Runtime, 16.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+            if (!File.Exists(leg) || !File.Exists(lat) || force)
+            {
+                Console.WriteLine("Extracting Runtime Binaries");
+                string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
+                System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, "Runtime", $"{os}.zip"), Runtime);
+                Console.WriteLine("Done Extracting Runtime Binaries");
+                if (OperatingSystem.IsWindows())
+                {
+                    Program.AddToFirewall();
+                }
+            }
         }
 
         /// <summary>
@@ -103,7 +134,7 @@ namespace OlegMC.REST_API.Data
                 return path;
             }
         }
-        public static string LocalIP
+        public static IPAddress LocalIP
         {
             get
             {
@@ -114,7 +145,7 @@ namespace OlegMC.REST_API.Data
                     {
                         if (ip.ToString().StartsWith("192.168"))
                         {
-                            return ip.ToString();
+                            return ip;
                         }
                     }
                 }
