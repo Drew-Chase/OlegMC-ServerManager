@@ -5,6 +5,8 @@ using OlegMC.REST_API.Model;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OlegMC.REST_API
 {
@@ -38,7 +40,7 @@ namespace OlegMC.REST_API
                             }
                             continue;
                         case "-genRuntime":
-                            Global.GenRuntime(true);
+                            Global.GenRuntime(true).Wait();
                             continue;
                         case "-firewall":
                             FirewallManager.FirewallCom firewall = new();
@@ -67,11 +69,26 @@ namespace OlegMC.REST_API
             }
             Global.GenRuntime();
             Global.SyncInfoWithServer();
-            CreateHostBuilder(args).Build().Run();
-            AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+            if (OperatingSystem.IsWindows())
             {
-                ServersListModel.GetInstance.StopAllServers();
-            };
+                Task.Run(() =>
+                {
+                    Thread.Sleep(3000);
+                    WaitForCommand();
+                });
+            }
+            if (!Global.IsLoggedIn)
+            {
+                new Process()
+                {
+                    StartInfo = new ProcessStartInfo()
+                    {
+                        FileName = $"http://127.0.0.1:{Global.API_PORT}"
+                    }
+                }.Start();
+            }
+            CreateHostBuilder(args).Build().Run();
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => OnClose();
         }
 
         public static void ModifyWindow(bool show)
@@ -104,6 +121,42 @@ namespace OlegMC.REST_API
             };
             process.Start();
             process.WaitForExit();
+        }
+
+        private static void WaitForCommand()
+        {
+            Console.Write(">> ");
+            string command = Console.ReadLine();
+            switch (command.ToLower())
+            {
+                case "help":
+                    Console.WriteLine("You need help.");
+                    break;
+                case "show":
+                    ModifyWindow(true);
+                    break;
+                case "hide":
+                    ModifyWindow(false);
+                    break;
+                default:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"{command} is not a reconnized command!");
+                    Console.WriteLine("Type help for more information");
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+            }
+            Thread.Sleep(500);
+            WaitForCommand();
+
+        }
+
+        private static void OnClose()
+        {
+            ServersListModel.GetInstance.StopAllServers();
+            if (Networking.IsPortOpen(Global.API_PORT).Result)
+            {
+                Networking.ClosePort(Global.API_PORT).Wait();
+            }
         }
 
 
