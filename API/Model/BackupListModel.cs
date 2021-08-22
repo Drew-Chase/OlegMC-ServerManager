@@ -95,15 +95,6 @@ namespace OlegMC.REST_API.Model
             }
         }
 
-        private void CreateBackup(bool full, int intervals_in_minutes = 0)
-        {
-            if (intervals_in_minutes != 0)
-            {
-                CreateBackupSchedule(intervals_in_minutes);
-            }
-            CreateManualBackup(Server, full);
-        }
-
         public void CreateBackupSchedule(int minutes)
         {
             BackupTimer = new((minutes * 1000) * 60);
@@ -111,7 +102,7 @@ namespace OlegMC.REST_API.Model
             {
                 if (Server.CurrentStatus == ServerStatus.Online)
                 {
-                    CreateBackup(true);
+                    CreateManualBackup(Server);
                 }
             };
             BackupTimer.AutoReset = true;
