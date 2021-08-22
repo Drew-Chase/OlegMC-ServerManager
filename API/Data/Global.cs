@@ -1,9 +1,12 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Data
 {
@@ -95,27 +98,45 @@ namespace OlegMC.REST_API.Data
             string path = Path.Combine(Runtime, version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
             if (!File.Exists(path))
             {
-                GenRuntime();
+                GenRuntime().Wait();
             }
             return path;
         }
 
 
-        public static void GenRuntime(bool force = false)
+        public static async Task GenRuntime(bool force = false)
         {
-            string leg = Path.Combine(Runtime, 8.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
-            string lat = Path.Combine(Runtime, 16.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
-            if (!File.Exists(leg) || !File.Exists(lat) || force)
-            {
-                Console.WriteLine("Extracting Runtime Binaries");
-                string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
-                System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, "Runtime", $"{os}.zip"), Runtime);
-                Console.WriteLine("Done Extracting Runtime Binaries");
-                if (OperatingSystem.IsWindows())
-                {
-                    Program.AddToFirewall();
-                }
-            }
+            await Task.Run(() =>
+             {
+                 Thread.Sleep(1000 * 5);
+                 string leg = Path.Combine(Runtime, 8.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+                 string lat = Path.Combine(Runtime, 16.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+                 if (!File.Exists(leg) || !File.Exists(lat) || force)
+                 {
+                     using WebClient client = new();
+                     string temp = Path.Combine(Path.GetTempPath(), "oleg-server-runtime.zip");
+                     if (File.Exists(temp)) File.Delete(temp);
+                     Console.WriteLine("Downloading Runtime Binaries");
+                     string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
+                     var progress = new ProgressBar();
+                     client.DownloadProgressChanged += (s, e) =>
+                     {
+                         progress.Report((double)e.ProgressPercentage / 100);
+                     };
+                     client.DownloadFileCompleted += (s, e) =>
+                     {
+                         progress.Dispose();
+                         Console.WriteLine("Extracting Runtime Binaries");
+                         System.IO.Compression.ZipFile.ExtractToDirectory(temp, Runtime);
+                         Console.WriteLine("Done Extracting Runtime Binaries");
+                         if (OperatingSystem.IsWindows())
+                         {
+                             Program.AddToFirewall();
+                         }
+                     };
+                     client.DownloadFileAsync(new Uri($"https://dl.openboxhosting.com/runtime/{os}.zip"), temp);
+                 }
+             });
         }
 
         /// <summary>
