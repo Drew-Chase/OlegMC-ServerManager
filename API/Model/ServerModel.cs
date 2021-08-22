@@ -226,21 +226,6 @@ namespace OlegMC.REST_API.Model
             AcceptEULA();
             ForceScan();
             Backups = new(this, true);
-            if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
-            {
-                Task.Run(async () =>
-                {
-                    //await Networking.ClosePort(port);
-                    if (!await Networking.IsPortOpen(port))
-                    {
-                        await Networking.OpenPort(port);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"port {port} is already open");
-                    }
-                }).Wait();
-            }
         }
 
         #region Functions
@@ -248,6 +233,14 @@ namespace OlegMC.REST_API.Model
 
         public void DownloadServer(string version)
         {
+            if (HasStartJar)
+            {
+                File.Delete(Path.Combine(ServerPath, "start.jar"));
+            }
+            if (HasInstallJar)
+            {
+                File.Delete(Path.Combine(ServerPath, "installer.jar"));
+            }
             using (System.Net.WebClient client = new System.Net.WebClient())
             {
                 switch (ServerType)
@@ -282,7 +275,16 @@ namespace OlegMC.REST_API.Model
             ForceScan();
             if (HasStartJar)
             {
-
+                if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
+                {
+                    Task.Run(async () =>
+                    {
+                        if (!await Networking.IsPortOpen(port))
+                        {
+                            await Networking.OpenPort(port);
+                        }
+                    }).Wait();
+                }
                 AcceptEULA();
                 Console.WriteLine($"Starting Server for {ServerPlan.Username}");
                 try
@@ -311,6 +313,17 @@ namespace OlegMC.REST_API.Model
 
                     ServerProcess.Exited += (s, o) =>
                     {
+
+                        if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
+                        {
+                            Task.Run(async () =>
+                            {
+                                if (await Networking.IsPortOpen(port))
+                                {
+                                    await Networking.ClosePort(port);
+                                }
+                            }).Wait();
+                        }
                         timer.Stop();
                         CurrentStatus = ServerStatus.Offline;
                         ServerProcess = null;
