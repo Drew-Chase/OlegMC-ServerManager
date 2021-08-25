@@ -1,5 +1,8 @@
 ﻿using Open.Nat;
 using System;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -71,6 +74,57 @@ namespace OlegMC.REST_API.Data
             {
                 Console.WriteLine($"OPENED => {mapping}");
             }
+        }
+
+        public static System.Net.IPAddress GetPublicIP()
+        {
+            try
+            {
+                return new NatDiscoverer().DiscoverDeviceAsync(PortMapper.Upnp, new(5000)).Result.GetExternalIPAsync().Result;
+            }
+            catch
+            {
+                try
+                {
+                    return new NatDiscoverer().DiscoverDeviceAsync(PortMapper.Pmp, new(5000)).Result.GetExternalIPAsync().Result;
+                }
+                catch
+                {
+                    throw new System.Net.WebException("Couldn't find router using either Upnp or Pmp protocols.");
+                }
+            }
+        }
+
+        public static IPAddress GetLocalIP()
+        {
+            NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
+            foreach (NetworkInterface adapter in adapters)
+            {
+                IPInterfaceProperties adapterProperties = adapter.GetIPProperties();
+                GatewayIPAddressInformationCollection addresses = adapterProperties.GatewayAddresses;
+                if (addresses.Count > 0)
+                {
+                    foreach (GatewayIPAddressInformation address in addresses)
+                    {
+                        if (address.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            string root = $"{address.Address.ToString().Split('.')[0]}.{address.Address.ToString().Split('.')[1]}.{address.Address.ToString().Split('.')[2]}";
+                            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+                            foreach (IPAddress ip in host.AddressList)
+                            {
+                                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                                {
+                                    if (ip.ToString().StartsWith(root))
+                                    {
+                                        return ip;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            throw new WebException("No outward bound ip address was found");
         }
     }
 }
