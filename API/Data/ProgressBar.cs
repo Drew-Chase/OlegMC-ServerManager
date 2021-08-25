@@ -44,7 +44,10 @@ namespace OlegMC.REST_API
         {
             lock (timer)
             {
-                if (disposed) return;
+                if (disposed)
+                {
+                    return;
+                }
 
                 int progressBlockCount = (int)(currentProgress * blockCount);
                 int percent = (int)(currentProgress * 100);
