@@ -14,13 +14,13 @@ namespace OlegMC.REST_API.Controllers
         [Route("/login/{username}/{password}/{port}/{protocol}")]
         public IActionResult Login(string username, string password, int port, string protocol)
         {
-            Global.LogIn(username, password, port, protocol);
+            Global.Functions.LogIn(username, password, port, protocol);
             return Ok();
         }
         [Route("/logout")]
         public IActionResult LogOut()
         {
-            Global.LogOut();
+            Global.Functions.LogOut();
             return Ok();
         }
     }

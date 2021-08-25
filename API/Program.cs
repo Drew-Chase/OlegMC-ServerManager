@@ -14,6 +14,7 @@ namespace OlegMC.REST_API
     {
         public static void Main(string[] args)
         {
+            UpdateManager.Update();
             if (OperatingSystem.IsWindows())
             {
                 ModifyWindow(false);
@@ -30,8 +31,11 @@ namespace OlegMC.REST_API
                 {
                     switch (args[i])
                     {
+                        case "-firstLaunch":
+                            AddToFirewall();
+                            continue;
                         case "-updateServer":
-                            Global.SyncInfoWithServer(true);
+                            Global.Functions.SyncInfoWithServer(true);
                             continue;
                         case "-show":
                             if (OperatingSystem.IsWindows())
@@ -40,23 +44,23 @@ namespace OlegMC.REST_API
                             }
                             continue;
                         case "-genRuntime":
-                            Global.GenRuntime(true).Wait();
+                            Global.Functions.GenRuntime(true).Wait();
                             continue;
                         case "-firewall":
                             FirewallManager.FirewallCom firewall = new();
                             firewall.AddAuthorizeApp(
-                                new("OlegMC - Server Manager", Global.ExecutingBinary)
+                                new("OlegMC - Server Manager", Global.Paths.ExecutingBinary)
                                 {
                                     Enabled = true
                                 });
                             firewall.AddAuthorizeApp(
-                                new("OlegMC - Server Manager (java 16 runtime)", Global.GetRuntimeExecutable(Global.JavaVersion.Latest))
+                                new("OlegMC - Server Manager (java 16 runtime)", Global.Functions.GetRuntimeExecutable(JavaVersion.Latest))
                                 {
                                     Enabled = true
                                 });
 
                             firewall.AddAuthorizeApp(
-                                new("OlegMC - Server Manager (java 8 runtime)", Global.GetRuntimeExecutable(Global.JavaVersion.Legacy))
+                                new("OlegMC - Server Manager (java 8 runtime)", Global.Functions.GetRuntimeExecutable(JavaVersion.Legacy))
                                 {
                                     Enabled = true
                                 });
@@ -67,8 +71,8 @@ namespace OlegMC.REST_API
                     }
                 }
             }
-            Global.GenRuntime();
-            Global.SyncInfoWithServer();
+            Global.Functions.GenRuntime().Wait();
+            Global.Functions.SyncInfoWithServer();
             if (OperatingSystem.IsWindows())
             {
                 Task.Run(() =>
@@ -93,34 +97,40 @@ namespace OlegMC.REST_API
 
         public static void ModifyWindow(bool show)
         {
-            [DllImport("kernel32.dll")]
-            static extern IntPtr GetConsoleWindow();
+            if (OperatingSystem.IsWindows())
+            {
+                [DllImport("kernel32.dll")]
+                static extern IntPtr GetConsoleWindow();
 
-            [DllImport("user32.dll")]
-            static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+                [DllImport("user32.dll")]
+                static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-            const int SW_HIDE = 0;
-            const int SW_SHOW = 5;
+                const int SW_HIDE = 0;
+                const int SW_SHOW = 5;
 
-            IntPtr handle = GetConsoleWindow();
-            ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
+                IntPtr handle = GetConsoleWindow();
+                ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
+            }
         }
 
         public static void AddToFirewall()
         {
-            Console.WriteLine("Adding Firewall Rule");
-            Process process = new()
+            if (OperatingSystem.IsWindows())
             {
-                StartInfo = new()
+                Console.WriteLine("Adding Firewall Rule");
+                Process process = new()
                 {
-                    FileName = Global.ExecutingBinary,
-                    Arguments = "-firewall",
-                    Verb = "runas",
-                    UseShellExecute = true,
-                }
-            };
-            process.Start();
-            process.WaitForExit();
+                    StartInfo = new()
+                    {
+                        FileName = Global.Paths.ExecutingBinary,
+                        Arguments = "-firewall",
+                        Verb = "runas",
+                        UseShellExecute = true,
+                    }
+                };
+                process.Start();
+                process.WaitForExit();
+            }
         }
 
         private static void WaitForCommand()

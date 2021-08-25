@@ -297,7 +297,7 @@ namespace OlegMC.REST_API.Controllers
             }
             string levelName = server.ServerProperties.GetByName("level-name").Value;
             levelName = string.IsNullOrWhiteSpace(levelName) ? "world" : levelName;
-            string zipArchive = System.IO.Path.Combine(Global.GetUniqueTempFolder(username), "download-world.zip");
+            string zipArchive = System.IO.Path.Combine(Global.Functions.GetUniqueTempFolder(username), "download-world.zip");
             if (System.IO.File.Exists(zipArchive))
             {
                 System.IO.File.Delete(zipArchive);
@@ -314,7 +314,7 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            string zipArchive = System.IO.Path.Combine(Global.GetUniqueTempFolder(username), "download-server.zip");
+            string zipArchive = System.IO.Path.Combine(Global.Functions.GetUniqueTempFolder(username), "download-server.zip");
             if (System.IO.File.Exists(zipArchive))
             {
                 System.IO.File.Delete(zipArchive);
@@ -385,18 +385,18 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            Global.GetUniqueTempFolder(username);
+            Global.Functions.GetUniqueTempFolder(username);
             int port = int.Parse(server.ServerProperties.GetByName("server-port").Value);
-            System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), true);
+            System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), true);
             if (Directory.Exists(server.ServerPath))
             {
                 Directory.Delete(server.ServerPath, true);
             }
 
-            System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
+            System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
             server.AcceptEULA();
             server.ServerProperties.Update("server-port", port);
-            Global.DestroyUniqueTempFolder(username);
+            Global.Functions.DestroyUniqueTempFolder(username);
             return Ok(new { message = "Cleaned Successfully" });
         }
     }

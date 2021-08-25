@@ -49,6 +49,7 @@ namespace OlegMC.REST_API.Model
         Killing,
         Installing,
         BackingUp,
+        Saving,
     }
     #endregion
     /// <summary>
@@ -86,9 +87,13 @@ namespace OlegMC.REST_API.Model
             }
         }
 
+        public bool IsRunning => ServerProcess != null && !ServerProcess.HasExited;
+
         public List<string> ConsoleLog { get; private set; }
 
-        public ServerStatus CurrentStatus { get; set; }
+        public ServerStatus PreviousStatus { get; set; }
+        private ServerStatus _current = ServerStatus.Offline;
+        public ServerStatus CurrentStatus { get => _current; set { PreviousStatus = _current; _current = value; } }
         public BackupListModel Backups { get; set; }
         public bool HasStartJar = false;
         public bool HasInstallJar = false;
@@ -190,10 +195,10 @@ namespace OlegMC.REST_API.Model
         {
             get
             {
-                string path = Path.Combine(Global.Runtime, Java_Version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+                string path = Path.Combine(Global.Paths.Runtime, Java_Version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
                 if (!File.Exists(path))
                 {
-                    Global.GenRuntime();
+                    Global.Functions.GenRuntime().Wait();
                 }
                 return path;
             }
@@ -204,7 +209,7 @@ namespace OlegMC.REST_API.Model
         public ServerModel(PlanModel plan)
         {
             ServerPlan = plan;
-            ServerPath = Path.Combine(Global.ServersPath, plan.Username);
+            ServerPath = Path.Combine(Global.Paths.ServersPath, plan.Username);
             Directory.CreateDirectory(ServerPath);
             ServerProperties = ServerPropertiesModel.Init(ServerPath);
             string olegIdentifier = Path.Combine(ServerPath, "olegmc.server");
@@ -367,6 +372,14 @@ namespace OlegMC.REST_API.Model
                             if (text.Contains("joined the game") || text.Contains("left the game"))
                             {
                                 UpdatePlayersOnline();
+                            }
+                            if (text.Contains("Saving the game"))
+                            {
+                                CurrentStatus = ServerStatus.Saving;
+                            }
+                            if (text.Contains("Saved the game"))
+                            {
+                                CurrentStatus = PreviousStatus;
                             }
 
                             foreach (string cmd in search_cmds)

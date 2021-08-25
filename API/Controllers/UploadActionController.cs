@@ -33,13 +33,13 @@ namespace OlegMC.REST_API.Controllers
             if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
 
-                FileStream stream = new(Path.Combine(Global.GetUniqueTempFolder(username), "start.jar"), FileMode.Create);
+                FileStream stream = new(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "start.jar"), FileMode.Create);
                 file.CopyTo(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
-                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "start.jar"), Path.Combine(server.ServerPath, "start.jar"), true);
-                Global.DestroyUniqueTempFolder(username);
+                System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "start.jar"), Path.Combine(server.ServerPath, "start.jar"), true);
+                Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok();
             }
             else
@@ -66,13 +66,13 @@ namespace OlegMC.REST_API.Controllers
             server.ServerType = (ServerType)Enum.Parse(typeof(ServerType), loader);
             if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
-                FileStream stream = new(Path.Combine(Global.GetUniqueTempFolder(username), "installer.jar"), FileMode.Create);
+                FileStream stream = new(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "installer.jar"), FileMode.Create);
                 file.CopyTo(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
 
-                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "installer.jar"), Path.Combine(server.ServerPath, "installer.jar"), true);
+                System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "installer.jar"), Path.Combine(server.ServerPath, "installer.jar"), true);
 
                 server.ForceScan();
                 if (server.HasInstallJar)
@@ -86,7 +86,7 @@ namespace OlegMC.REST_API.Controllers
                         }
                     }
                 }
-                Global.DestroyUniqueTempFolder(username);
+                Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded and Installed" });
             }
             else
@@ -118,7 +118,7 @@ namespace OlegMC.REST_API.Controllers
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
-                string temp_dir = Path.Combine(Global.GetUniqueTempFolder(username), "mods");
+                string temp_dir = Path.Combine(Global.Functions.GetUniqueTempFolder(username), "mods");
                 Directory.CreateDirectory(temp_dir);
                 System.IO.Compression.ZipFile.ExtractToDirectory(temp_zip, temp_dir, true);
                 string[] jars = Directory.GetFiles(temp_dir, "*.jar", SearchOption.TopDirectoryOnly);
@@ -131,11 +131,11 @@ namespace OlegMC.REST_API.Controllers
                     System.IO.File.Delete(temp_zip);
                 }
 
-                Global.DestroyUniqueTempFolder(username);
+                Global.Functions.DestroyUniqueTempFolder(username);
             }
             else if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
-                string temp_file = Path.Combine(Global.GetUniqueTempFolder(username), "mods", file.FileName);
+                string temp_file = Path.Combine(Global.Functions.GetUniqueTempFolder(username), "mods", file.FileName);
                 FileStream stream = new(temp_file, FileMode.Create);
                 await file.CopyToAsync(stream);
                 stream.Flush();
@@ -160,7 +160,7 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "datapacks")).FullName;
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "datapacks")).FullName;
             if (file.ContentType == "application/zip")
             {
                 string file_path = Path.Combine(temp_path, file.FileName);
@@ -170,7 +170,7 @@ namespace OlegMC.REST_API.Controllers
                 stream.Dispose();
                 stream.Close();
                 DatapackListModel.GetServerInstance(server).Add(file_path);
-                Global.DestroyUniqueTempFolder(username);
+                Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded Successfully" });
             }
             else
@@ -188,7 +188,7 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "world")).FullName;
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "world")).FullName;
             if (file.ContentType == "application/zip")
             {
                 string file_path = Path.Combine(temp_path, file.FileName);
@@ -209,7 +209,7 @@ namespace OlegMC.REST_API.Controllers
                 string levelName = new DirectoryInfo(unzip).Name;
                 System.IO.Compression.ZipFile.ExtractToDirectory(file_path, unzip, true);
                 server.ServerProperties.Update("level-name", levelName);
-                Global.DestroyUniqueTempFolder(username);
+                Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded Successfully" });
             }
             else
@@ -227,7 +227,7 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            string temp_path = Directory.CreateDirectory(Path.Combine(Global.GetUniqueTempFolder(username), "server")).FullName;
+            string temp_path = Directory.CreateDirectory(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "server")).FullName;
             if (file.ContentType == "application/zip")
             {
                 string file_path = Path.Combine(temp_path, file.FileName);
@@ -237,7 +237,7 @@ namespace OlegMC.REST_API.Controllers
                 stream.Dispose();
                 stream.Close();
                 int port = int.Parse(server.ServerProperties.GetByName("server-port").Value);
-                System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), true);
+                System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), true);
 
                 if (Directory.Exists(server.ServerPath))
                 {
@@ -247,11 +247,11 @@ namespace OlegMC.REST_API.Controllers
                 string unzip = Directory.CreateDirectory(server.ServerPath).FullName;
                 System.IO.Compression.ZipFile.ExtractToDirectory(file_path, unzip, true);
 
-                System.IO.File.Move(Path.Combine(Global.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
+                System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
                 server.AcceptEULA();
                 server.ServerProperties.Update("server-port", port);
 
-                Global.DestroyUniqueTempFolder(username);
+                Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok(new { message = "Uploaded Successfully" });
             }
             else

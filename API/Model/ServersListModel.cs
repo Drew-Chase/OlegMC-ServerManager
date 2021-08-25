@@ -55,7 +55,7 @@ namespace OlegMC.REST_API.Model
         /// </summary>
         private void Find()
         {
-            string[] files = System.IO.Directory.GetFiles(Global.ServersPath, "olegmc.server", System.IO.SearchOption.AllDirectories);
+            string[] files = System.IO.Directory.GetFiles(Global.Paths.ServersPath, "olegmc.server", System.IO.SearchOption.AllDirectories);
             for (int i = 0; i < files.Length; i++)
             {
                 string text = System.IO.File.ReadAllText(files[i]);
