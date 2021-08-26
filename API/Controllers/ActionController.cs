@@ -13,6 +13,7 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/")]
     public class ActionController : ControllerBase
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Installs a server based on a specific loader, See: <seealso cref="ServerType"/>
         /// </summary>

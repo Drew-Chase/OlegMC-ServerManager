@@ -12,13 +12,13 @@ namespace OlegMC.REST_API
 {
     public class Program
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Global.Logger;
         public static void Main(string[] args)
         {
-            UpdateManager.Update();
+            Console.Title = "OlegMC - Server Manager";
             if (OperatingSystem.IsWindows())
             {
                 ModifyWindow(false);
-                Console.Title = "OlegMC - Server Manager";
             }
             if (!Networking.IsPortOpen(Global.API_PORT).Result)
             {
@@ -44,7 +44,7 @@ namespace OlegMC.REST_API
                             }
                             continue;
                         case "-genRuntime":
-                            Global.Functions.GenRuntime(true).Wait();
+                            Global.Functions.GenRuntime(true);
                             continue;
                         case "-firewall":
                             FirewallManager.FirewallCom firewall = new();
@@ -71,7 +71,7 @@ namespace OlegMC.REST_API
                     }
                 }
             }
-            Global.Functions.GenRuntime().Wait();
+            Global.Functions.GenRuntime();
             Global.Functions.SyncInfoWithServer();
             if (OperatingSystem.IsWindows())
             {
@@ -117,7 +117,7 @@ namespace OlegMC.REST_API
         {
             if (OperatingSystem.IsWindows())
             {
-                Console.WriteLine("Adding Firewall Rule");
+                log.Info("Adding Firewall Rule");
                 Process process = new()
                 {
                     StartInfo = new()
@@ -140,7 +140,7 @@ namespace OlegMC.REST_API
             switch (command.ToLower())
             {
                 case "help":
-                    Console.WriteLine("You need help.");
+                    log.Debug("You need help.");
                     break;
                 case "show":
                     ModifyWindow(true);
@@ -149,10 +149,8 @@ namespace OlegMC.REST_API
                     ModifyWindow(false);
                     break;
                 default:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{command} is not a reconnized command!");
-                    Console.WriteLine("Type help for more information");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    log.Error($"\"{command}\" is not a reconnized command!");
+                    log.Warn("Type help for more information");
                     break;
             }
             Thread.Sleep(500);
@@ -168,7 +166,6 @@ namespace OlegMC.REST_API
                 Networking.ClosePort(Global.API_PORT).Wait();
             }
         }
-
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {

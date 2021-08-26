@@ -63,6 +63,7 @@ namespace OlegMC.REST_API
 
         private void UpdateText(string text)
         {
+            text = $"[PROGRESS: {DateTime.Now:MM/dd/yyyy hh:mm:ss tt}]: {text}";
             // Get length of common portion
             int commonPrefixLength = 0;
             int commonLength = Math.Min(currentText.Length, text.Length);
@@ -72,7 +73,7 @@ namespace OlegMC.REST_API
             }
 
             // Backtrack to the first differing character
-            StringBuilder outputBuilder = new StringBuilder();
+            StringBuilder outputBuilder = new();
             outputBuilder.Append('\b', currentText.Length - commonPrefixLength);
 
             // Output new suffix
@@ -85,8 +86,9 @@ namespace OlegMC.REST_API
                 outputBuilder.Append(' ', overlapCount);
                 outputBuilder.Append('\b', overlapCount);
             }
-
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write(outputBuilder);
+            Console.ForegroundColor = ConsoleColor.White;
             currentText = text;
         }
 

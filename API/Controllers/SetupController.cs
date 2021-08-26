@@ -5,6 +5,7 @@ namespace OlegMC.REST_API.Controllers
 {
     public class SetupController : Controller
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         [Route("/")]
         public IActionResult Login()
         {

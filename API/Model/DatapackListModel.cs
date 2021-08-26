@@ -4,6 +4,7 @@ namespace OlegMC.REST_API.Model
 {
     public class DatapackListModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         public DatapackModel[] Datapacks { get; private set; }
         private readonly ServerModel server;
         public static DatapackListModel GetServerInstance(ServerModel server)

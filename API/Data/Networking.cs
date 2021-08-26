@@ -10,6 +10,7 @@ namespace OlegMC.REST_API.Data
 {
     public class Networking
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Global.Logger;
         public static object Thead { get; private set; }
 
         public static async Task OpenPort(int port, string description = "OlegMC Server Manager")
@@ -25,12 +26,11 @@ namespace OlegMC.REST_API.Data
 
                 map = new(Protocol.Udp, port, port, description);
                 await device.CreatePortMapAsync(map);
-                Console.WriteLine($"Created {map}");
+                log.Debug($"Created {map}");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                log.Error(e);
             }
         }
         public static async Task ClosePort(int port)
@@ -43,7 +43,8 @@ namespace OlegMC.REST_API.Data
             {
                 if (mapping.PrivatePort == port)
                 {
-                    Console.WriteLine($"Deleting {mapping}");
+                    log.Warn($"Deleting {mapping}");
+
                     await device.DeletePortMapAsync(mapping);
                 }
             }
@@ -72,7 +73,7 @@ namespace OlegMC.REST_API.Data
 
             foreach (Mapping mapping in await device.GetAllMappingsAsync())
             {
-                Console.WriteLine($"OPENED => {mapping}");
+                log.Debug($"OPENED => {mapping}");
             }
         }
 

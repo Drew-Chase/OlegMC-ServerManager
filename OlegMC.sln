@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Windows Binary", "Windows B
 		{A7C9D085-9094-47C1-8FF5-536063AA3309} = {A7C9D085-9094-47C1-8FF5-536063AA3309}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater", "Updater\Updater.csproj", "{82DB7A48-2614-4D83-B8CA-D42829346FD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		{080F44D0-BC9D-4C75-9612-DF6D89ED8FDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{080F44D0-BC9D-4C75-9612-DF6D89ED8FDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{080F44D0-BC9D-4C75-9612-DF6D89ED8FDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82DB7A48-2614-4D83-B8CA-D42829346FD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82DB7A48-2614-4D83-B8CA-D42829346FD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82DB7A48-2614-4D83-B8CA-D42829346FD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82DB7A48-2614-4D83-B8CA-D42829346FD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

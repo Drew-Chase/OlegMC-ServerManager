@@ -1,7 +1,6 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -22,76 +21,38 @@ namespace OlegMC.REST_API.Data
     {
         public static int API_PORT => 5077;
         public static bool IsLoggedIn => File.Exists(Path.Combine(Paths.Root, "auth"));
+        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
 
         public static class Paths
         {
+            /// <summary>
+            /// Path to the .exe file
+            /// </summary>
             public static string ExecutingBinary => Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, $"{AppDomain.CurrentDomain.FriendlyName}{(OperatingSystem.IsWindows() ? ".exe" : "")}");
             /// <summary>
             /// The root directory of the application
             /// </summary>
-            public static string Root
-            {
-                get
-                {
-                    string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC");
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
+            public static string Root => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName;
 
-                    return path;
-                }
-            }
+            /// <summary>
+            /// Directory that contains all the log files
+            /// </summary>
+            public static string Logs => Directory.CreateDirectory(Path.Combine(Root, "Logs", "api")).FullName;
 
             /// <summary>
             /// The Servers path.
             /// </summary>
-            public static string ServersPath
-            {
-                get
-                {
-                    string path = Path.Combine(Root, "Servers");
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
+            public static string ServersPath => Directory.CreateDirectory(Path.Combine(Root, "Servers")).FullName;
 
-                    return path;
-                }
-            }
             /// <summary>
             /// The path to the java runtime executables.
             /// </summary>
-            public static string Runtime
-            {
-                get
-                {
-                    string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
-                    string path = Path.Combine(Root, "Runtime", os);
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                    return path;
-                }
-            }
+            public static string Runtime => Directory.CreateDirectory(Path.Combine(Root, "Runtime", OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64")).FullName;
 
             /// <summary>
             /// The path to the server backup directories
             /// </summary>
-            public static string BackupPath
-            {
-                get
-                {
-                    string path = Path.Combine(Root, "Backups");
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    return path;
-                }
-            }
+            public static string BackupPath => Directory.CreateDirectory(Path.Combine(Root, "Backups")).FullName;
         }
 
         public static class Functions
@@ -114,7 +75,7 @@ namespace OlegMC.REST_API.Data
                     }
                     catch
                     {
-                        Debug.WriteLine($"Unable to add {file}");
+                        Logger.Debug($"Unable to add {file}");
                         continue;
                     }
                 }
@@ -177,13 +138,13 @@ namespace OlegMC.REST_API.Data
                 string path = Path.Combine(Paths.Runtime, version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
                 if (!File.Exists(path))
                 {
-                    GenRuntime().Wait();
+                    GenRuntime();
                 }
                 return path;
             }
 
 
-            public static async Task GenRuntime(bool force = false)
+            public static async void GenRuntime(bool force = false)
             {
                 await Task.Run(() =>
                 {
@@ -199,9 +160,9 @@ namespace OlegMC.REST_API.Data
                             File.Delete(temp);
                         }
 
-                        Console.WriteLine("Downloading Runtime Binaries");
+                        Logger.Info("Downloading Runtime Binaries");
                         string os = OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64";
-                        ProgressBar progress = new ProgressBar();
+                        ProgressBar progress = new();
                         client.DownloadProgressChanged += (s, e) =>
                         {
                             progress.Report((double)e.ProgressPercentage / 100);
@@ -209,9 +170,9 @@ namespace OlegMC.REST_API.Data
                         client.DownloadFileCompleted += (s, e) =>
                         {
                             progress.Dispose();
-                            Console.WriteLine("Extracting Runtime Binaries");
+                            Logger.Info("Extracting Runtime Binaries");
                             System.IO.Compression.ZipFile.ExtractToDirectory(temp, Paths.Runtime);
-                            Console.WriteLine("Done Extracting Runtime Binaries");
+                            Logger.Info("Done Extracting Runtime Binaries");
                             if (OperatingSystem.IsWindows())
                             {
                                 Program.AddToFirewall();
@@ -282,7 +243,7 @@ namespace OlegMC.REST_API.Data
 
                     manager.Add("local", local);
                     manager.Add("remote", remote);
-                    Console.WriteLine("Updated Server Locations");
+                    Logger.Debug("Updated Server Locations");
                 }
             }
             public static void LogOut()

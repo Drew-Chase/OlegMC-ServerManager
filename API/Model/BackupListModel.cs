@@ -1,16 +1,15 @@
 ﻿using OlegMC.REST_API.Data;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Model
 {
     public class BackupListModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         public System.Timers.Timer BackupTimer { get; private set; }
 
         public ServerModel Server { get; private set; }
@@ -95,7 +94,9 @@ namespace OlegMC.REST_API.Model
                 server.CurrentStatus = tmpStatus;
 
                 if (server.IsRunning)
+                {
                     server.ServerProcess.StandardInput.WriteLine("save-on");
+                }
             }).Wait();
         }
 

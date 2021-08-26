@@ -11,6 +11,7 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Get/")]
     public class GetController : ControllerBase
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
 
         [HttpGet("/status")]
         public IActionResult GetHostStatus()

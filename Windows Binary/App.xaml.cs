@@ -1,13 +1,8 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace OlegMC.Windows_Binary
@@ -17,21 +12,23 @@ namespace OlegMC.Windows_Binary
     /// </summary>
     public partial class App : Application
     {
-        System.Windows.Forms.NotifyIcon NotifyIcon;
-        System.Windows.Forms.ContextMenuStrip contextMenu;
-        System.Windows.Forms.ToolStripItem showConsole;
-        Process api;
-        private bool isConsoleVisible = false;
+        static ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "win-service")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
+
+        private System.Windows.Forms.NotifyIcon NotifyIcon;
+        private System.Windows.Forms.ContextMenuStrip contextMenu;
+        private System.Windows.Forms.ToolStripItem showConsole;
+        private Process api;
 
         public App()
         {
+            log.Debug("Starting Windows Service");
             SystemTray();
             StartAPI();
-            //Update();
         }
 
         private void SystemTray()
         {
+            log.Debug("Creating System Tray Icon");
             NotifyIcon = new System.Windows.Forms.NotifyIcon
             {
                 Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location)
@@ -39,6 +36,7 @@ namespace OlegMC.Windows_Binary
             NotifyIcon.MouseDoubleClick += (s, e) =>
             {
             };
+            log.Debug("Setting up system tray context items");
             contextMenu = new System.Windows.Forms.ContextMenuStrip();
             contextMenu.Items.Add("Open Control Panel", null, (s, e) => OpenControlPanel());
             showConsole = contextMenu.Items.Add("Show Console", null, (s, e) => ShowConsole());
@@ -51,6 +49,7 @@ namespace OlegMC.Windows_Binary
 
         private void OpenControlPanel()
         {
+            log.Debug("Opening control panel");
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC");
             if (!Directory.Exists(path))
             {
@@ -60,6 +59,7 @@ namespace OlegMC.Windows_Binary
 
             if (File.Exists(path))
             {
+                log.Debug("User is logged in!");
                 ConfigManager manager = new ConfigManager(path, true);
                 if (manager.GetConfigByKey("token") != null)
                 {
@@ -71,15 +71,20 @@ namespace OlegMC.Windows_Binary
                             FileName = $"http://myaccount.openboxhosting.com#token={manager.GetConfigByKey("token").Value}"
                         }
                     }.Start();
+                    log.Debug("Opening openbox control panel=> \"http://myaccount.openboxhosting.com\"");
                 }
                 else
                 {
+                    log.Error("User is not logged in");
+                    log.Info("Restarting API and Opening login page");
                     File.Delete(path);
                     RestartAPI();
                 }
             }
             else
             {
+                log.Error("User is not logged in");
+                log.Info("Opening login page");
                 new Process()
                 {
                     StartInfo = new ProcessStartInfo()
@@ -94,6 +99,7 @@ namespace OlegMC.Windows_Binary
         {
             if (api == null || api.HasExited)
             {
+                log.Debug("Starting API Process");
                 api = new Process()
                 {
                     StartInfo = new ProcessStartInfo()
@@ -114,6 +120,7 @@ namespace OlegMC.Windows_Binary
         }
         private void RestartAPI()
         {
+            log.Debug("Killing API Process");
             api.Kill();
             StartAPI();
         }
@@ -121,9 +128,9 @@ namespace OlegMC.Windows_Binary
         {
             if (api != null && !api.HasExited)
             {
+                log.Debug("Opening Console");
                 api.StandardInput.WriteLine("show");
                 showConsole.Text = "Hide Console";
-                isConsoleVisible = true;
                 showConsole.Click -= (s, e) => ShowConsole();
                 showConsole.Click += (s, e) => HideConsole();
             }
@@ -132,16 +139,17 @@ namespace OlegMC.Windows_Binary
         {
             if (api != null && !api.HasExited)
             {
+                log.Debug("Closing Console");
                 api.StandardInput.WriteLine("hide");
                 showConsole.Text = "Show Console";
                 showConsole.Click -= (s, e) => HideConsole();
                 showConsole.Click += (s, e) => ShowConsole();
-                isConsoleVisible = false;
             }
         }
 
         private void Close()
         {
+            log.Warn("Closing Windows Service Application...");
             if (NotifyIcon != null)
             {
                 NotifyIcon.Visible = false;
@@ -153,19 +161,5 @@ namespace OlegMC.Windows_Binary
 
             Environment.Exit(0);
         }
-
-        private void Update()
-        {
-            System.Timers.Timer timer = new System.Timers.Timer(2 * 1000)
-            {
-                AutoReset = true,
-                Enabled = true,
-            };
-            timer.Elapsed += (s, e) =>
-            {
-            };
-            timer.Start();
-        }
-
     }
 }

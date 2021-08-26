@@ -10,6 +10,7 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/Post/")]
     public class PostActionController : ControllerBase
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Creates a server for a user.
         /// </summary>

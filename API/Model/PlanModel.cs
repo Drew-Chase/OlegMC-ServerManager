@@ -5,6 +5,7 @@
     /// </summary>
     public class PlanModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// The Plan Name.
         /// </summary>

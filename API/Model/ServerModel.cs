@@ -57,6 +57,7 @@ namespace OlegMC.REST_API.Model
     /// </summary>
     public class ServerModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         #region Variables
         #region public
 
@@ -198,7 +199,7 @@ namespace OlegMC.REST_API.Model
                 string path = Path.Combine(Global.Paths.Runtime, Java_Version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
                 if (!File.Exists(path))
                 {
-                    Global.Functions.GenRuntime().Wait();
+                    Global.Functions.GenRuntime();
                 }
                 return path;
             }
@@ -258,7 +259,6 @@ namespace OlegMC.REST_API.Model
                             if (v["id"].ToString() == version)
                             {
                                 JObject versionManifest = (JObject)JsonConvert.DeserializeObject(client.DownloadString(v["url"].ToString()));
-                                Console.WriteLine(versionManifest["downloads"]["server"]["url"].ToString());
                                 client.DownloadFile(versionManifest["downloads"]["server"]["url"].ToString(), Path.Combine(ServerPath, "installer.jar"));
                             }
                         }
@@ -291,7 +291,7 @@ namespace OlegMC.REST_API.Model
                     }).Wait();
                 }
                 AcceptEULA();
-                Console.WriteLine($"Starting Server for {ServerPlan.Username}");
+                log.Info($"Starting Server for {ServerPlan.Username}");
                 try
                 {
                     ServerProcess = new()

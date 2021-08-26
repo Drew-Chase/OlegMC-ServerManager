@@ -7,6 +7,7 @@ namespace OlegMC.REST_API.Model
 {
     public class ServersListModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         private readonly List<ServerModel> servers;
         public List<int> Ports { get; private set; }
         #region Singleton

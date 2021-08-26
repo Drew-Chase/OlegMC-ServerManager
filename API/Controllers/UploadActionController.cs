@@ -15,7 +15,7 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/Upload/")]
     public class UploadActionController : ControllerBase
     {
-
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Uploads the server jar file and coppies it to the server path.
         /// </summary>

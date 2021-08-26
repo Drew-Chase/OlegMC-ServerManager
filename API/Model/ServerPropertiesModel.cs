@@ -8,6 +8,7 @@ namespace OlegMC.REST_API.Model
     /// </summary>
     public class ServerPropertiesModel
     {
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
 
         #region Variables
         #region public
