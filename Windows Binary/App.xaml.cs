@@ -12,7 +12,7 @@ namespace OlegMC.Windows_Binary
     /// </summary>
     public partial class App : Application
     {
-        static ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "win-service")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "win-service")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
 
         private System.Windows.Forms.NotifyIcon NotifyIcon;
         private System.Windows.Forms.ContextMenuStrip contextMenu;

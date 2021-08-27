@@ -5,7 +5,7 @@ namespace OlegMC.Updater
 {
     internal class Program
     {
-        static ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "updater")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "updater")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
 
         private static void Main(string[] args)
         {

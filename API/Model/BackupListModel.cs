@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Model
@@ -134,7 +133,11 @@ namespace OlegMC.REST_API.Model
 
         public void CreateBackupSchedule(int minutes)
         {
-            if (BackupTimer != null) BackupTimer.Stop();
+            if (BackupTimer != null)
+            {
+                BackupTimer.Stop();
+            }
+
             BackupTimer = new((minutes * 1000) * 60);
             BackupTimer.Elapsed += (s, e) =>
             {
