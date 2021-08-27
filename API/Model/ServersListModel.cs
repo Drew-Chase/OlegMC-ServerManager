@@ -73,7 +73,7 @@ namespace OlegMC.REST_API.Model
                     server.ServerProperties.Update("server-port", port);
                     Ports.Add(port);
                 }
-                Add(PlanModel.GetBasedOnName(config.GetConfigByKey("plan") == null ? "byos" : config.GetConfigByKey("plan").Value, config.GetConfigByKey("username").Value));
+                Add(server);
             }
         }
 
@@ -81,9 +81,9 @@ namespace OlegMC.REST_API.Model
         /// Adds a server based on server plan, See: <seealso cref="PlanModel" />
         /// </summary>
         /// <param name="plan"></param>
-        public void Add(PlanModel plan)
+        public void Add(ServerModel server)
         {
-            servers.Add(new(plan));
+            servers.Add(server);
         }
 
         /// <summary>

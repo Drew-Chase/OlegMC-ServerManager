@@ -91,6 +91,7 @@ namespace OlegMC.REST_API
                     }
                 }.Start();
             }
+            _ = ServersListModel.GetInstance;
             CreateHostBuilder(args).Build().Run();
             AppDomain.CurrentDomain.ProcessExit += (s, e) => OnClose();
         }

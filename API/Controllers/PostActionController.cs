@@ -29,7 +29,7 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest();
             }
-            ServersListModel.GetInstance.Add(planModel);
+            ServersListModel.GetInstance.Add(new(planModel));
             return Ok();
         }
         /// <summary>

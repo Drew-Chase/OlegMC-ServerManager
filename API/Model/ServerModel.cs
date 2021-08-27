@@ -50,6 +50,7 @@ namespace OlegMC.REST_API.Model
         Installing,
         BackingUp,
         Saving,
+        Starting,
     }
     #endregion
     /// <summary>
@@ -232,6 +233,10 @@ namespace OlegMC.REST_API.Model
             AcceptEULA();
             ForceScan();
             Backups = new(this, true);
+            if (config.GetConfigByKey("backup_intervals").ParseInt() != 0)
+            {
+                Backups.CreateBackupSchedule(config.GetConfigByKey("backup_intervals").ParseInt());
+            }
         }
 
         #region Functions
@@ -373,6 +378,10 @@ namespace OlegMC.REST_API.Model
                             {
                                 UpdatePlayersOnline();
                             }
+                            if (CurrentStatus == ServerStatus.Starting && text.Contains(")! For help, type \"help\""))
+                            {
+                                CurrentStatus = ServerStatus.Online;
+                            }
                             if (text.Contains("Saving the game"))
                             {
                                 CurrentStatus = ServerStatus.Saving;
@@ -411,7 +420,7 @@ namespace OlegMC.REST_API.Model
 
                     ServerProcess.BeginOutputReadLine();
 
-                    CurrentStatus = ServerStatus.Online;
+                    CurrentStatus = ServerStatus.Starting;
                 }
                 catch
                 {
