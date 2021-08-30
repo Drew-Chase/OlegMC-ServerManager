@@ -11,6 +11,7 @@ namespace OlegMC.Updater
         {
             Console.Title = "OlegMC Updater";
             log.Info("Updating OlegMC - Server Manager");
+            System.Threading.Thread.Sleep(5000);
             string path = string.Empty;
             if (args.Length > 0)
             {
