@@ -47,18 +47,18 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            if (server.ServerProperties.GetByName(name) != null && !server.ServerProperties.GetByName(name).Protected)
+            if (server.ServerProperties.GetByName(name) != null)
             {
+                if (!server.ServerPlan.Name.ToLower().Equals("byos")&&server.ServerProperties.GetByName(name).Protected)
+                {
+                    return BadRequest(new { message = $"\"{name}\" is a protected property, thus can NOT be removed and/or modified?  Are you trying to do something bad?" });
+                }
                 server.ServerProperties.Update(name, value);
-                return Ok();
+                return Ok(new { message = "updated" });
             }
             else if (server.ServerProperties.GetByName(name) == null)
             {
                 return BadRequest(new { message = $"\"{name}\" server property does NOT exist?  Did you miss type?" });
-            }
-            else if (server.ServerProperties.GetByName(name).Protected)
-            {
-                return BadRequest(new { message = $"\"{name}\" is a protected property, thus can NOT be removed and/or modified?  Are you trying to do something bad?" });
             }
             else
             {
@@ -104,12 +104,11 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            if (server.ServerPlan.Name == "BYOS")
+            if (server.ServerPlan.Name.ToLower().Equals("byos"))
             {
-
                 server.ServerPlan.MaxBackups = backups;
                 server.config.GetConfigByKey("max_backups").Value = backups.ToString();
-                return Ok(new { message = $"Ram set to {backups}" });
+                return Ok(new { message = $"Max Backups set to {backups}" });
             }
             else
             {
