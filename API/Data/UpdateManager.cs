@@ -25,11 +25,7 @@ namespace OlegMC.REST_API.Data
             JObject json = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
             (int remoteRelease, int remoteMajor, int remoteMinor) = ExtractVersion(json);
             (int localRelease, int localMajor, int localMinor) = ExtractVersion((JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(File.ReadAllText(Path.Combine(Directory.GetParent(Global.Paths.ExecutingBinary).FullName, $"{new FileInfo(Global.Paths.ExecutingBinary).Name.Replace(new FileInfo(Global.Paths.ExecutingBinary).Extension, "")}.deps.json"))));
-            if (remoteMinor != localMinor || remoteMajor != localMajor || remoteRelease != localRelease)
-            {
-                return true;
-            }
-            return false;
+            return (remoteMinor != localMinor || remoteMajor != localMajor || remoteRelease != localRelease);
         }
         public static void Update(bool force = false)
         {
@@ -47,7 +43,7 @@ namespace OlegMC.REST_API.Data
                 File.Delete(updateExe);
             }
 
-            log.Debug($"cmd /k \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\"");
+            log.Debug($"cmd /c \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\"");
             Console.ReadLine();
             using (System.Net.WebClient client = new())
             {
@@ -59,7 +55,7 @@ namespace OlegMC.REST_API.Data
                 info = new()
                 {
                     FileName = "cmd",
-                    Arguments = $"/k \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\""
+                    Arguments = $"/c \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\""
                 };
             }
 
