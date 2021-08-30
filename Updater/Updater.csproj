@@ -35,7 +35,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChaseLabs.Logger" Version="0.0.9" />
+    <PackageReference Include="ChaseLabs.Logger" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
