@@ -49,10 +49,10 @@ namespace OlegMC.REST_API
                         case "-firewall":
                             FirewallManager.FirewallCom firewall = new();
                             firewall.AddAuthorizeApp(
-                                new("OlegMC - Server Manager", Global.Paths.ExecutingBinary)
-                                {
-                                    Enabled = true
-                                });
+                                                        new("OlegMC - Server Manager", Global.Paths.ExecutingBinary)
+                                                        {
+                                                            Enabled = true
+                                                        });
                             firewall.AddAuthorizeApp(
                                 new("OlegMC - Server Manager (java 16 runtime)", Global.Functions.GetRuntimeExecutable(JavaVersion.Latest))
                                 {
@@ -136,7 +136,6 @@ namespace OlegMC.REST_API
 
         private static void WaitForCommand()
         {
-            Console.Write(">> ");
             string command = Console.ReadLine();
             switch (command.ToLower())
             {
