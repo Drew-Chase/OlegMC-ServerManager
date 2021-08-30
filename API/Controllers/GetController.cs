@@ -95,7 +95,7 @@ namespace OlegMC.REST_API.Controllers
             return new JsonResult(new
             {
                 enabled = server.config.GetConfigByKey("backups_enabled").ParseBoolean(),
-                max_backups = server.config.GetConfigByKey("max_backups").ParseInt(),
+                max_backups = server.ServerPlan.MaxBackups,
                 intervals = server.config.GetConfigByKey("backup_intervals").ParseInt(),
                 backups = BackupListModel.GetBackups(server)
             });

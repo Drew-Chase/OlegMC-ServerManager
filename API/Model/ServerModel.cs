@@ -224,7 +224,8 @@ namespace OlegMC.REST_API.Model
             config.Add("backups_enabled", false);
             config.Add("backup_intervals", 0);
             config.Add("max_backups", 5);
-            ServerPlan.MaxBackups = 5;
+            config.Add("theme", "default");
+            ServerPlan.MaxBackups = config.GetConfigByKey("backup_intervals").ParseInt();
 
             java_version = config.GetConfigByKey("java").ParseInt();
             max_ram = config.GetConfigByKey("ram").ParseInt();
