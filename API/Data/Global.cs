@@ -1,4 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
+using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
@@ -21,8 +22,11 @@ namespace OlegMC.REST_API.Data
     {
         public static int API_PORT => 5077;
         public static bool IsLoggedIn => File.Exists(Path.Combine(Paths.Root, "auth"));
+#if DEBUG
         public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
-
+#else
+        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%").SetMinimumLogType(ChaseLabs.CLLogger.Lists.LogTypes.Info);
+#endif
         public static class Paths
         {
             /// <summary>
@@ -57,10 +61,16 @@ namespace OlegMC.REST_API.Data
 
         public static class Functions
         {
-            public static void SafelyCreateZipFromDirectory(string sourceDirectoryName, string zipFilePath)
+
+            public static string SafelyCreateZipFromDirectory(string sourceDirectoryName, string zipFilePath)
             {
-                using FileStream zipToOpen = new(zipFilePath, FileMode.Create);
-                using ZipArchive archive = new(zipToOpen, ZipArchiveMode.Create);
+                if (File.Exists(zipFilePath))
+                {
+                    File.Delete(zipFilePath);
+                    Thread.Sleep(500);
+                }
+
+                using ZipArchive archive = new(new FileStream(zipFilePath, FileMode.Create), ZipArchiveMode.Create);
 
                 foreach (string file in Directory.GetFiles(sourceDirectoryName, "*", SearchOption.AllDirectories))
                 {
@@ -79,6 +89,7 @@ namespace OlegMC.REST_API.Data
                         continue;
                     }
                 }
+                return zipFilePath;
 
             }
             public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
