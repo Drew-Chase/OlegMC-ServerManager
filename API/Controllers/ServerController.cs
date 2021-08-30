@@ -4,10 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Controllers
 {
@@ -15,7 +12,7 @@ namespace OlegMC.REST_API.Controllers
     [Route("/server/")]
     public class ServerController : ControllerBase
     {
-        private static ILog log = Global.Logger;
+        private static readonly ILog log = Global.Logger;
         [HttpGet]
         public IActionResult Index()
         {
@@ -79,9 +76,14 @@ namespace OlegMC.REST_API.Controllers
         public IActionResult StartOnBoot([FromForm] bool start)
         {
             if (start)
+            {
                 RegistryHelper.EnableStartOnBoot();
+            }
             else
+            {
                 RegistryHelper.DisableStartOnBoot();
+            }
+
             log.Debug($"Start on Boot set to {start}");
             return Ok(new { message = $"Start on Boot set to {start}" });
         }
@@ -95,7 +97,11 @@ namespace OlegMC.REST_API.Controllers
         }
         #endregion
         [HttpGet("logs")]
-        public IActionResult DownloadLogs() => new FileStreamResult(new FileStream(Global.Functions.SafelyCreateZipFromDirectory(Directory.GetParent(Global.Paths.Logs).FullName, Path.Combine(Global.Paths.Root, "logs.zip")), FileMode.Open), "application/zip");
+        public IActionResult DownloadLogs()
+        {
+            return new FileStreamResult(new FileStream(Global.Functions.SafelyCreateZipFromDirectory(Directory.GetParent(Global.Paths.Logs).FullName, Path.Combine(Global.Paths.Root, "logs.zip")), FileMode.Open), "application/zip");
+        }
+
         [HttpGet("clean-logs")]
         public IActionResult CleanLogs()
         {

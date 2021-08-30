@@ -1,5 +1,4 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;

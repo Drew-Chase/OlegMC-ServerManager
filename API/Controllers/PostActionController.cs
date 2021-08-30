@@ -49,7 +49,7 @@ namespace OlegMC.REST_API.Controllers
             }
             if (server.ServerProperties.GetByName(name) != null)
             {
-                if (!server.ServerPlan.Name.ToLower().Equals("byos")&&server.ServerProperties.GetByName(name).Protected)
+                if (!server.ServerPlan.Name.ToLower().Equals("byos") && server.ServerProperties.GetByName(name).Protected)
                 {
                     return BadRequest(new { message = $"\"{name}\" is a protected property, thus can NOT be removed and/or modified?  Are you trying to do something bad?" });
                 }

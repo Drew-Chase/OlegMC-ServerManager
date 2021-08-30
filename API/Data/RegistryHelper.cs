@@ -1,16 +1,13 @@
 ﻿using ChaseLabs.CLLogger.Interfaces;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OlegMC.REST_API.Data
 {
     public static class RegistryHelper
     {
-        private static ILog log = Global.Logger;
-        private static string run = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        private static readonly ILog log = Global.Logger;
+        private static readonly string run = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
 
         public static bool ShouldStartOnBoot()
         {
@@ -18,7 +15,10 @@ namespace OlegMC.REST_API.Data
             {
                 using RegistryKey key = Registry.CurrentUser.OpenSubKey(run);
                 if (key.GetValue(@"OlegMC_Server_Manager") != null && key.GetValue(@"OlegMC_Server_Manager").GetType().Equals(typeof(string)) && !((string)key.GetValue(@"OlegMC_Server_Manager")).Equals($"\"{Global.Paths.ExecutingBinary}\""))
+                {
                     EnableStartOnBoot(true);
+                }
+
                 return key.GetValue(@"OlegMC_Server_Manager") != null;
             }
             else if (OperatingSystem.IsLinux())
