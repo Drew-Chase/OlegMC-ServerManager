@@ -11,13 +11,12 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Get/")]
     public class GetController : ControllerBase
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
-
         [HttpGet("/status")]
         public IActionResult GetHostStatus()
         {
             return Ok(new { message = "open" });
         }
+
         /// <summary>
         /// Gets the basic information about the server.
         /// </summary>
@@ -94,12 +93,13 @@ namespace OlegMC.REST_API.Controllers
 
             return new JsonResult(new
             {
-                enabled = server.config.GetConfigByKey("backups_enabled").ParseBoolean(),
+                enabled = server.Config.GetConfigByKey("backups_enabled").ParseBoolean(),
                 max_backups = server.ServerPlan.MaxBackups,
-                intervals = server.config.GetConfigByKey("backup_intervals").ParseInt(),
+                intervals = server.Config.GetConfigByKey("backup_intervals").ParseInt(),
                 backups = BackupListModel.GetBackups(server)
             });
         }
+
         [HttpGet("{username}/datapack/{index?}")]
         public IActionResult GetDatapacks(string username, int? index)
         {
@@ -110,7 +110,6 @@ namespace OlegMC.REST_API.Controllers
             }
             if (index.HasValue)
             {
-
                 try
                 {
                     return new JsonResult(DatapackListModel.GetServerInstance(server).Get(index.Value));

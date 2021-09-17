@@ -1,15 +1,14 @@
-﻿using OlegMC.REST_API.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Model
 {
     public class BackupListModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         public System.Timers.Timer BackupTimer { get; private set; }
 
         public ServerModel Server { get; private set; }
@@ -30,14 +29,14 @@ namespace OlegMC.REST_API.Model
 
             Backups = new();
 
-            string path = Path.Combine(Global.Paths.BackupPath, server.ServerPlan.Username);
+            string path = Path.Combine(Paths.BackupPath, server.ServerPlan.Username);
             Directory.CreateDirectory(path);
             UpdateBackups(path, server);
         }
 
         public static BackupModel[] GetBackups(ServerModel server)
         {
-            string path = Path.Combine(Global.Paths.BackupPath, server.ServerPlan.Username);
+            string path = Path.Combine(Paths.BackupPath, server.ServerPlan.Username);
             string[] dirNames = Directory.GetFiles(path, "*.zip", SearchOption.TopDirectoryOnly);
 
             dirNames = dirNames.OrderBy(o => new FileInfo(o).CreationTime).Reverse().ToArray();
@@ -51,72 +50,69 @@ namespace OlegMC.REST_API.Model
             return backups;
         }
 
-        public static void CreateManualBackup(ServerModel server, bool full = true)
+        public static void CreateManualBackupAsync(ServerModel server, bool full = true)
         {
-            Task.Run(() =>
+            ServerStatus tmpStatus = server.CurrentStatus;
+            Logger.Debug($"Backing Up {server.ServerPlan.Username}'s server");
+            if (server.IsRunning)
             {
-                ServerStatus tmpStatus = server.CurrentStatus;
-                Task backupTask = new(() =>
+                DateTime start = DateTime.Now;
+                Logger.Debug("Doing Save Game Check");
+                server.ServerProcess.StandardInput.WriteLine("say Creating Backup");
+                server.ServerProcess.StandardInput.WriteLine("save-off");
+                server.ServerProcess.StandardInput.WriteLine("save-all");
+                server.ServerProcess.OutputDataReceived += (s, e) =>
                 {
-                    server.CurrentStatus = ServerStatus.BackingUp;
-                    string backup_folder = Path.Combine(Global.Paths.BackupPath, server.ServerPlan.Username);
-                    server.Backups.UpdateBackups(backup_folder, server);
-                    Directory.CreateDirectory(backup_folder);
-                    string oldestFile = string.Empty;
-                    try
+                    if (e.Data != null)
                     {
-                        oldestFile = new DirectoryInfo(backup_folder).GetFileSystemInfos("*.zip", SearchOption.TopDirectoryOnly).OrderBy(fi => fi.CreationTime).First().FullName;
-                        if (server.Backups.NumberOfBackups + 1 > server.ServerPlan.MaxBackups)
+                        if ((bool)e.Data?.Contains("Saved the game"))
                         {
-                            File.Delete(oldestFile);
+                            Task.Run(() => CreateManualBackup(server, full));
                         }
                     }
-                    catch
-                    {
+                };
+                Logger.Debug("Save Game Check Completed");
+            }
+            else
+            {
+                Task.Run(() => CreateManualBackup(server, full));
+            }
+        }
 
-                    }
-
-                    string backup_path = Path.Combine(backup_folder, $"{DateTime.Now:HH-mm-ss (MM-dd-yyyy)}.zip");
-                    if (full)
-                    {
-                        log.Debug("Creating Zip File");
-                        Global.Functions.SafelyCreateZipFromDirectory(server.ServerPath, backup_path);
-                    }
-
-                    server.Backups.UpdateBackups(backup_folder, server);
-                    server.CurrentStatus = tmpStatus;
-
-                    if (server.IsRunning)
-                    {
-                        server.ServerProcess.StandardInput.WriteLine("save-on");
-                        server.ServerProcess.StandardInput.WriteLine("say Backup Completed");
-                    }
-                });
-                log.Debug($"Backing Up {server.ServerPlan.Username}'s server");
-                if (server.IsRunning)
+        private static void CreateManualBackup(ServerModel server, bool full = true)
+        {
+            server.CurrentStatus = ServerStatus.BackingUp;
+            string backup_folder = Path.Combine(Paths.BackupPath, server.ServerPlan.Username);
+            server.Backups.UpdateBackups(backup_folder, server);
+            Directory.CreateDirectory(backup_folder);
+            string oldestFile = string.Empty;
+            try
+            {
+                oldestFile = new DirectoryInfo(backup_folder).GetFileSystemInfos("*.zip", SearchOption.TopDirectoryOnly).OrderBy(fi => fi.CreationTime).First().FullName;
+                if (server.Backups.NumberOfBackups + 1 > server.ServerPlan.MaxBackups)
                 {
-                    DateTime start = DateTime.Now;
-                    log.Debug("Doing Save Game Check");
-                    server.ServerProcess.StandardInput.WriteLine("say Creating Backup");
-                    server.ServerProcess.StandardInput.WriteLine("save-off");
-                    server.ServerProcess.StandardInput.WriteLine("save-all");
-                    server.ServerProcess.OutputDataReceived += (s, e) =>
-                    {
-                        if (e.Data != null)
-                        {
-                            if ((bool)e.Data?.Contains("Saved the game"))
-                            {
-                                backupTask.Start();
-                            }
-                        }
-                    };
-                    log.Debug("Save Game Check Completed");
+                    File.Delete(oldestFile);
                 }
-                else
-                {
-                    backupTask.Start();
-                }
-            }).Wait();
+            }
+            catch
+            {
+            }
+
+            string backup_path = Path.Combine(backup_folder, $"{DateTime.Now:HH-mm-ss (MM-dd-yyyy)}.zip");
+            if (full)
+            {
+                Logger.Debug("Creating Zip File");
+                Functions.SafelyCreateZipFromDirectory(server.ServerPath, backup_path);
+            }
+
+            server.Backups.UpdateBackups(backup_folder, server);
+            server.CurrentStatus = server.PreviousStatus;
+
+            if (server.IsRunning)
+            {
+                server.ServerProcess.StandardInput.WriteLine("save-on");
+                server.ServerProcess.StandardInput.WriteLine("say Backup Completed");
+            }
         }
 
         private void UpdateBackups(string _path, ServerModel _server)

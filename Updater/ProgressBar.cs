@@ -105,6 +105,5 @@ namespace OlegMC.Updater
                 UpdateText(string.Empty);
             }
         }
-
     }
 }

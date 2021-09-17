@@ -1,12 +1,12 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Data
 {
     public static class UpdateManager
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Global.Logger;
         public static bool CheckForUpdates()
         {
             string jsonString = string.Empty;
@@ -27,6 +27,7 @@ namespace OlegMC.REST_API.Data
             (int localRelease, int localMajor, int localMinor) = ExtractVersion((JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(File.ReadAllText(Path.Combine(Directory.GetParent(Global.Paths.ExecutingBinary).FullName, $"{new FileInfo(Global.Paths.ExecutingBinary).Name.Replace(new FileInfo(Global.Paths.ExecutingBinary).Extension, "")}.deps.json"))));
             return (remoteMinor != localMinor || remoteMajor != localMajor || remoteRelease != localRelease);
         }
+
         public static void Update(bool force = false)
         {
             if (CheckForUpdates() || force)
@@ -34,6 +35,7 @@ namespace OlegMC.REST_API.Data
                 Update();
             }
         }
+
         private static void Update()
         {
             string os = OperatingSystem.IsWindows() ? "oleg-updater.exe" : "oleg-updater";
@@ -43,7 +45,7 @@ namespace OlegMC.REST_API.Data
                 File.Delete(updateExe);
             }
 
-            log.Debug($"cmd /c \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\"");
+            Logger.Debug($"cmd /c \"{updateExe} -path='{Directory.GetParent(Global.Paths.ExecutingBinary).Parent.FullName}'\"");
             Console.ReadLine();
             using (System.Net.WebClient client = new())
             {
@@ -62,9 +64,9 @@ namespace OlegMC.REST_API.Data
             new System.Diagnostics.Process()
             {
                 StartInfo = info
-
             }.Start();
         }
+
         private static (int release, int major, int minor) ExtractVersion(JObject json)
         {
             string version = json["targets"][".NETCoreApp,Version=v5.0"].ToString().Split(":")[0].Replace("{", "").Replace("\"", "").Replace("OlegMC/", "").Trim();
@@ -78,7 +80,7 @@ namespace OlegMC.REST_API.Data
             }
             catch (FormatException e)
             {
-                log.Error(e);
+                Logger.Error(e);
                 return (0, 0, 0);
             }
             return (release, major, minor);

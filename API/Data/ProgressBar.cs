@@ -105,6 +105,5 @@ namespace OlegMC.REST_API
                 UpdateText(string.Empty);
             }
         }
-
     }
 }

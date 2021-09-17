@@ -7,12 +7,12 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API
 {
     public class Program
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Global.Logger;
         public static void Main(string[] args)
         {
             Console.Title = "OlegMC - Server Manager";
@@ -20,9 +20,9 @@ namespace OlegMC.REST_API
             {
                 ModifyWindow(false);
             }
-            if (!Networking.IsPortOpen(Global.API_PORT).Result)
+            if (!Networking.IsPortOpen(API_PORT).Result)
             {
-                Networking.OpenPort(Global.API_PORT).Wait();
+                Networking.OpenPort(API_PORT).Wait();
             }
 
             if (args.Length != 0)
@@ -35,7 +35,7 @@ namespace OlegMC.REST_API
                             AddToFirewall();
                             continue;
                         case "-updateServer":
-                            Global.Functions.SyncInfoWithServer(true);
+                            Functions.SyncInfoWithServer(true);
                             continue;
                         case "-show":
                             if (OperatingSystem.IsWindows())
@@ -44,17 +44,17 @@ namespace OlegMC.REST_API
                             }
                             continue;
                         case "-genRuntime":
-                            Global.Functions.GenRuntime(true);
+                            Functions.GenRuntime(true);
                             continue;
                         case "-firewall":
                             FirewallManager.FirewallCom firewall = new();
                             firewall.AddAuthorizeApp(
-                                                        new("OlegMC - Server Manager", Global.Paths.ExecutingBinary)
+                                                        new("OlegMC - Server Manager", Paths.ExecutingBinary)
                                                         {
                                                             Enabled = true
                                                         });
                             firewall.AddAuthorizeApp(
-                                new("OlegMC - Server Manager (java 16 runtime)", Global.Functions.GetRuntimeExecutable(JavaVersion.Latest))
+                                new("OlegMC - Server Manager (java 16 runtime)", Functions.GetRuntimeExecutable(JavaVersion.Latest))
                                 {
                                     Enabled = true
                                 });
@@ -118,7 +118,7 @@ namespace OlegMC.REST_API
         {
             if (OperatingSystem.IsWindows())
             {
-                log.Info("Adding Firewall Rule");
+                Logger.Info("Adding Firewall Rule");
                 Process process = new()
                 {
                     StartInfo = new()
@@ -140,22 +140,24 @@ namespace OlegMC.REST_API
             switch (command.ToLower())
             {
                 case "help":
-                    log.Debug("You need help.");
+                    Logger.Debug("You need help.");
                     break;
+
                 case "show":
                     ModifyWindow(true);
                     break;
+
                 case "hide":
                     ModifyWindow(false);
                     break;
+
                 default:
-                    log.Error($"\"{command}\" is not a reconnized command!");
-                    log.Warn("Type help for more information");
+                    Logger.Error($"\"{command}\" is not a reconnized command!");
+                    Logger.Warn("Type help for more information");
                     break;
             }
             Thread.Sleep(500);
             WaitForCommand();
-
         }
 
         private static void OnClose()

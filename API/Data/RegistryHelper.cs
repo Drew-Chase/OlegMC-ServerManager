@@ -1,19 +1,18 @@
-﻿using ChaseLabs.CLLogger.Interfaces;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Data
 {
     public static class RegistryHelper
     {
-        private static readonly ILog log = Global.Logger;
-        private static readonly string run = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        private static readonly string run_registry_location = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
 
         public static bool ShouldStartOnBoot()
         {
             if (OperatingSystem.IsWindows())
             {
-                using RegistryKey key = Registry.CurrentUser.OpenSubKey(run);
+                using RegistryKey key = Registry.CurrentUser.OpenSubKey(run_registry_location);
                 if (key.GetValue(@"OlegMC_Server_Manager") != null && key.GetValue(@"OlegMC_Server_Manager").GetType().Equals(typeof(string)) && !((string)key.GetValue(@"OlegMC_Server_Manager")).Equals($"\"{Global.Paths.ExecutingBinary}\""))
                 {
                     EnableStartOnBoot(true);
@@ -32,44 +31,40 @@ namespace OlegMC.REST_API.Data
 
         public static void EnableStartOnBoot(bool force = false)
         {
-            log.Info("Enabling Start On Boot");
+            Logger.Info("Enabling Start On Boot");
             if (force || !ShouldStartOnBoot())
             {
                 if (OperatingSystem.IsWindows())
                 {
-                    log.Debug("Enabling for Windows");
-                    using RegistryKey key = Registry.CurrentUser.OpenSubKey(run, true);
+                    Logger.Debug("Enabling for Windows");
+                    using RegistryKey key = Registry.CurrentUser.OpenSubKey(run_registry_location, true);
                     key.SetValue(@"OlegMC_Server_Manager", $"\"{Global.Paths.ExecutingBinary}\"");
                 }
                 else if (OperatingSystem.IsLinux())
                 {
-
                 }
                 else if (OperatingSystem.IsMacOS())
                 {
-
                 }
             }
         }
 
         public static void DisableStartOnBoot()
         {
-            log.Info("Disabling Start On Boot");
+            Logger.Info("Disabling Start On Boot");
             if (ShouldStartOnBoot())
             {
                 if (OperatingSystem.IsWindows())
                 {
-                    log.Debug("Disabling for Windows");
-                    using RegistryKey key = Registry.CurrentUser.OpenSubKey(run, true);
+                    Logger.Debug("Disabling for Windows");
+                    using RegistryKey key = Registry.CurrentUser.OpenSubKey(run_registry_location, true);
                     key.DeleteValue(@"OlegMC_Server_Manager");
                 }
                 else if (OperatingSystem.IsLinux())
                 {
-
                 }
                 else if (OperatingSystem.IsMacOS())
                 {
-
                 }
             }
         }

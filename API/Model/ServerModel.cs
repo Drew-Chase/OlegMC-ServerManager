@@ -9,10 +9,25 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Timers;
 using TraceLd.MineStatSharp;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Model
 {
     #region Enumerators
+
+    public enum ServerStatus
+    {
+        Offline,
+        Online,
+        Restarting,
+        Stopping,
+        Killing,
+        Installing,
+        BackingUp,
+        Saving,
+        Starting,
+    }
+
     /// <summary>
     /// <see cref="Vanilla"/> A basic minecraft server<br />
     /// <see cref="Forge"/> A forge based server<br />
@@ -28,6 +43,7 @@ namespace OlegMC.REST_API.Model
         Spigot,
         Other,
     }
+
     /// <summary>
     /// <see cref="Normal"/> Stops the server by typing stop in the console. <br />
     /// <see cref="Kill"/> Terminates the process running the server. <br />
@@ -40,27 +56,45 @@ namespace OlegMC.REST_API.Model
         Restart,
     }
 
-    public enum ServerStatus
-    {
-        Offline,
-        Online,
-        Restarting,
-        Stopping,
-        Killing,
-        Installing,
-        BackingUp,
-        Saving,
-        Starting,
-    }
-    #endregion
+    #endregion Enumerators
+
     /// <summary>
     /// The outline for a basic server.
     /// </summary>
     public class ServerModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         #region Variables
+
         #region public
+
+        public bool HasInstallJar = false;
+
+        public bool HasStartJar = false;
+
+        public BackupListModel Backups { get; set; }
+
+        public ConfigManager Config { get; private set; }
+
+        public List<string> ConsoleLog { get; private set; }
+
+        /// <summary>
+        /// Gets the number of players currently on the server
+        /// </summary>
+        public int CurrentPlayerCount { get; private set; }
+
+        public ServerStatus CurrentStatus { get => current_server_status; set { PreviousStatus = current_server_status; current_server_status = value; } }
+
+        public bool IsRunning => ServerProcess != null && !ServerProcess.HasExited;
+
+        public int JavaVersion
+        {
+            get => java_version;
+            set
+            {
+                Config.GetConfigByKey("java").Value = value.ToString();
+                java_version = value;
+            }
+        }
 
         public object JSONObject
         {
@@ -77,28 +111,17 @@ namespace OlegMC.REST_API.Model
                     PlayersOnline = CurrentPlayerCount,
                     MaxPlayers = MaxPlayerCount,
                     PlanTier = ServerPlan.Name,
-                    CPU = _cpuUsage,
+                    CPU = cpu_usage,
                     RAM = ServerProcess == null || ServerProcess.HasExited ? 0 : Math.Round(ServerProcess.PrivateMemorySize64 / 1024.0 / 1024 / 1024, 2),
-                    MaxRAM = Max_Ram,
+                    MaxRAM = MaxRam,
                     Port = ServerProperties.GetByName("server-port") != null ? ServerProperties.GetByName("server-port").Value : string.Empty,
                     IsModded = Directory.Exists(Path.Combine(ServerPath, "mods")),
                     IsPlugin = Directory.Exists(Path.Combine(ServerPath, "plugins")),
                     ModLoader = ServerType,
-                    JavaVersion = Java_Version,
+                    JavaVersion = JavaVersion,
                 };
             }
         }
-
-        public bool IsRunning => ServerProcess != null && !ServerProcess.HasExited;
-
-        public List<string> ConsoleLog { get; private set; }
-
-        public ServerStatus PreviousStatus { get; set; }
-        private ServerStatus _current = ServerStatus.Offline;
-        public ServerStatus CurrentStatus { get => _current; set { PreviousStatus = _current; _current = value; } }
-        public BackupListModel Backups { get; set; }
-        public bool HasStartJar = false;
-        public bool HasInstallJar = false;
 
         /// <summary>
         /// Gets/Sets the max number of players allowed on the server
@@ -115,58 +138,56 @@ namespace OlegMC.REST_API.Model
                 return 20;
             }
         }
-        /// <summary>
-        /// Gets the number of players currently on the server
-        /// </summary>
-        public int CurrentPlayerCount { get; private set; }
-        /// <summary>
-        /// Gets the <seealso cref="ServerPropertiesModel"/> <b><i>(server.properties)</i></b>
-        /// </summary>
-        public ServerPropertiesModel ServerProperties { get; private set; }
-        /// <summary>
-        /// Gets the <seealso cref="ServerType"/> of the server.
-        /// </summary>
-        public ServerType ServerType { get; set; }
-        /// <summary>
-        /// Gets the <seealso cref="PlanModel"/> of the server.
-        /// </summary>
-        public PlanModel ServerPlan { get; private set; }
-        /// <summary>
-        /// Returns the server directory.
-        /// </summary>
-        public string ServerPath { get; private set; }
-        /// <summary>
-        /// Returns the process currently holding the servers runtime.
-        /// </summary>
-        public Process ServerProcess { get; private set; }
-        public ConfigManager config { get; private set; }
-        public int Java_Version
-        {
-            get => java_version;
-            set
-            {
-                config.GetConfigByKey("java").Value = value.ToString();
-                java_version = value;
-            }
-        }
-        public int Max_Ram
+
+        public int MaxRam
         {
             get => max_ram;
             set
             {
                 if (ServerPlan.Name == "BYOS")
                 {
-                    config.GetConfigByKey("ram").Value = value.ToString();
+                    Config.GetConfigByKey("ram").Value = value.ToString();
                     max_ram = value;
                 }
             }
         }
-        #endregion
+
+        public ServerStatus PreviousStatus { get; set; }
+
+        /// <summary>
+        /// Returns the server directory.
+        /// </summary>
+        public string ServerPath { get; private set; }
+
+        /// <summary>
+        /// Gets the <seealso cref="PlanModel"/> of the server.
+        /// </summary>
+        public PlanModel ServerPlan { get; private set; }
+
+        /// <summary>
+        /// Returns the process currently holding the servers runtime.
+        /// </summary>
+        public Process ServerProcess { get; private set; }
+
+        /// <summary>
+        /// Gets the <seealso cref="ServerPropertiesModel"/> <b><i>(server.properties)</i></b>
+        /// </summary>
+        public ServerPropertiesModel ServerProperties { get; private set; }
+
+        /// <summary>
+        /// Gets the <seealso cref="ServerType"/> of the server.
+        /// </summary>
+        public ServerType ServerType { get; set; }
+
+        #endregion public
+
         #region private
-        private int max_ram;
+
+        private ServerStatus current_server_status = ServerStatus.Offline;
         private int java_version;
-        private long _ramUsage = 0;
-        private double _cpuUsage
+        private int max_ram;
+
+        private double cpu_usage
         {
             get
             {
@@ -193,55 +214,71 @@ namespace OlegMC.REST_API.Model
                 return 0;
             }
         }
+
         private string java_path
         {
             get
             {
-                string path = Path.Combine(Global.Paths.Runtime, Java_Version.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
+                string path = Path.Combine(Paths.Runtime, JavaVersion.ToString(), "bin", $"java{(OperatingSystem.IsWindows() ? ".exe" : string.Empty)}");
                 if (!File.Exists(path))
                 {
-                    Global.Functions.GenRuntime();
+                    Functions.GenRuntime();
                 }
                 return path;
             }
         }
-        #endregion
-        #endregion
+
+        #endregion private
+
+        #endregion Variables
 
         public ServerModel(PlanModel plan)
         {
             ServerPlan = plan;
-            ServerPath = Path.Combine(Global.Paths.ServersPath, plan.Username);
+            ServerPath = Path.Combine(Paths.ServersPath, plan.Username);
             Directory.CreateDirectory(ServerPath);
             ServerProperties = ServerPropertiesModel.Init(ServerPath);
             string olegIdentifier = Path.Combine(ServerPath, "olegmc.server");
-            config = new(olegIdentifier, false);
+            Config = new(olegIdentifier, false);
 
-            config.Add("plan", plan.Name);
-            config.Add("username", plan.Username);
-            config.Add("ram", plan.RAM);
-            config.Add("java", 16);
-            config.Add("backups_enabled", false);
-            config.Add("backup_intervals", 0);
-            config.Add("max_backups", 5);
-            config.Add("theme", "default");
-            ServerPlan.MaxBackups = config.GetConfigByKey("backup_intervals").ParseInt();
+            Config.Add("plan", plan.Name);
+            Config.Add("username", plan.Username);
+            Config.Add("ram", plan.RAM);
+            Config.Add("java", 16);
+            Config.Add("backups_enabled", false);
+            Config.Add("backup_intervals", 0);
+            Config.Add("max_backups", 5);
+            Config.Add("theme", "default");
+            ServerPlan.MaxBackups = Config.GetConfigByKey("max_backups").ParseInt();
 
-            java_version = config.GetConfigByKey("java").ParseInt();
-            max_ram = config.GetConfigByKey("ram").ParseInt();
+            java_version = Config.GetConfigByKey("java").ParseInt();
+            max_ram = Config.GetConfigByKey("ram").ParseInt();
 
             ConsoleLog = new();
             AcceptEULA();
             ForceScan();
             Backups = new(this, true);
-            if (config.GetConfigByKey("backup_intervals").ParseInt() != 0)
+            if (Config.GetConfigByKey("backup_intervals").ParseInt() != 0)
             {
-                Backups.CreateBackupSchedule(config.GetConfigByKey("backup_intervals").ParseInt());
+                Backups.CreateBackupSchedule(Config.GetConfigByKey("backup_intervals").ParseInt());
             }
         }
 
         #region Functions
+
         #region public
+
+        /// <summary>
+        /// Accepts the server eula
+        /// </summary>
+        public void AcceptEULA()
+        {
+            string path = Path.Combine(ServerPath, "eula.txt");
+            if (!File.Exists(path) || !File.ReadAllText(path).Contains("eula=true"))
+            {
+                File.WriteAllText(path, "eula=true");
+            }
+        }
 
         public void DownloadServer(string version)
         {
@@ -278,6 +315,36 @@ namespace OlegMC.REST_API.Model
         }
 
         /// <summary>
+        /// Scans the server path for a installer.jar and/or a start.jar<br />
+        /// If one is found it will set the start and/or install jar to it.
+        /// </summary>
+        public void ForceScan()
+        {
+            HasStartJar = Directory.GetFiles(ServerPath, "start.jar", SearchOption.TopDirectoryOnly).Length > 0;
+            HasInstallJar = Directory.GetFiles(ServerPath, "installer.jar", SearchOption.TopDirectoryOnly).Length > 0;
+        }
+
+        /// <summary>
+        /// Installs server using the <seealso cref="ServerType"/>.
+        /// </summary>
+        /// <returns>if the server was installed correctly.</returns>
+        public bool InstallServer()
+        {
+            ForceScan();
+            CurrentStatus = ServerStatus.Installing;
+
+            return ServerType switch
+            {
+                ServerType.Vanilla => InstallVanilla(),
+                ServerType.Forge => InstallForge(),
+                ServerType.Fabric => InstallFabric(),
+                ServerType.Spigot => InstallSpigot(),
+                ServerType.Other => InstallCustomServerType(),
+                _ => InstallVanilla(),
+            };
+        }
+
+        /// <summary>
         /// Starts the server normally.
         /// </summary>
         /// <returns>if the server started successfully</returns>
@@ -297,7 +364,7 @@ namespace OlegMC.REST_API.Model
                     }).Wait();
                 }
                 AcceptEULA();
-                log.Info($"Starting Server for {ServerPlan.Username}");
+                Logger.Info($"Starting Server for {ServerPlan.Username}");
                 try
                 {
                     ServerProcess = new()
@@ -305,7 +372,7 @@ namespace OlegMC.REST_API.Model
                         StartInfo = new()
                         {
                             FileName = java_path,
-                            Arguments = $"-Xms128M -Xmx{Max_Ram}G -jar start.jar nogui",
+                            Arguments = $"-Xms128M -Xmx{MaxRam}G -jar start.jar nogui",
                             UseShellExecute = false,
                             CreateNoWindow = false,
                             WorkingDirectory = ServerPath,
@@ -315,108 +382,20 @@ namespace OlegMC.REST_API.Model
                     };
                     ServerProcess.Start();
 
-                    _ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 / 1024;
-                    string[] search_cmds = { @"Starting minecraft server version", @"Loading for game Minecraft" };
-
                     Timer timer = new(60 * 1000) { AutoReset = true, Enabled = true };
                     timer.Elapsed += (s, e) => UpdatePlayersOnline();
                     timer.Start();
 
                     ServerProcess.Exited += (s, o) =>
                     {
-
-                        if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
-                        {
-                            Task.Run(async () =>
-                            {
-                                if (await Networking.IsPortOpen(port))
-                                {
-                                    await Networking.ClosePort(port);
-                                }
-                            }).Wait();
-                        }
+                        CurrentPlayerCount = 0;
                         timer.Stop();
-                        CurrentStatus = ServerStatus.Offline;
-                        ServerProcess = null;
-                        if (ConsoleLog.Contains(@"Error: A JNI error has occurred, please check your installation and try again"))
-                        {
-                            Java_Version = 16;
-                            StartServer();
-                        }
-                        foreach (string cmd in search_cmds)
-                        {
-                            if (ConsoleLog.Contains(cmd))
-                            {
-                                int index = ConsoleLog.IndexOf(cmd);
-                                string version = ConsoleLog[index].Split(cmd)[^1];
-                                int release = int.Parse(version.Split('.')[0].Replace(".", ""));
-                                int major = int.Parse(version.Split('.')[1].Replace(".", ""));
-                                if (major >= 16)
-                                {
-                                    Java_Version = 16;
-                                }
-                                else
-                                {
-                                    Java_Version = 8;
-                                }
-
-                                StartServer();
-                                break;
-                            }
-                        }
-
+                        MonitorServerOutput();
                     };
                     ConsoleLog = new();
                     ServerProcess.OutputDataReceived += (s, e) =>
                     {
-                        if (e.Data != null)
-                        {
-                            string text = e.Data;
-                            text = text.Replace(@"\u", "/u");
-                            ConsoleLog.Add($"{text}");
-
-                            if (text.Contains("joined the game") || text.Contains("left the game"))
-                            {
-                                UpdatePlayersOnline();
-                            }
-                            if (CurrentStatus == ServerStatus.Starting && text.Contains(")! For help, type \"help\""))
-                            {
-                                CurrentStatus = ServerStatus.Online;
-                            }
-                            if (text.Contains("Saving the game"))
-                            {
-                                CurrentStatus = ServerStatus.Saving;
-                            }
-                            if (text.Contains("Saved the game"))
-                            {
-                                CurrentStatus = PreviousStatus;
-                            }
-
-                            foreach (string cmd in search_cmds)
-                            {
-                                if (ConsoleLog.Contains(cmd))
-                                {
-                                    int index = ConsoleLog.IndexOf(cmd);
-                                    string version = ConsoleLog[index].Split(cmd)[^1];
-                                    int release = int.Parse(version.Split('.')[0].Replace(".", ""));
-                                    int major = int.Parse(version.Split('.')[1].Replace(".", ""));
-
-                                    if (major >= 17 && Java_Version == 8)
-                                    {
-                                        Java_Version = 16;
-                                        KillServer();
-                                        StartServer();
-                                    }
-                                    else if (major < 17 && Java_Version == 16)
-                                    {
-                                        Java_Version = 8;
-                                        KillServer();
-                                        StartServer();
-                                    }
-                                    break;
-                                }
-                            }
-                        }
+                        MonitorServerOutput(e.Data);
                     };
 
                     ServerProcess.BeginOutputReadLine();
@@ -433,18 +412,6 @@ namespace OlegMC.REST_API.Model
                 CurrentStatus = ServerStatus.Offline;
             }
             return CurrentStatus == ServerStatus.Online;
-        }
-
-        /// <summary>
-        /// Accepts the server eula
-        /// </summary>
-        public void AcceptEULA()
-        {
-            string path = Path.Combine(ServerPath, "eula.txt");
-            if (!File.Exists(path) || !File.ReadAllText(path).Contains("eula=true"))
-            {
-                File.WriteAllText(path, "eula=true");
-            }
         }
 
         /// <summary>
@@ -475,122 +442,9 @@ namespace OlegMC.REST_API.Model
             }
         }
 
+        #endregion public
 
-        /// <summary>
-        /// Installs server using the <seealso cref="ServerType"/>.
-        /// </summary>
-        /// <returns>if the server was installed correctly.</returns>
-        public bool InstallServer()
-        {
-            ForceScan();
-            CurrentStatus = ServerStatus.Installing;
-
-            return ServerType switch
-            {
-                ServerType.Vanilla => InstallVanilla(),
-                ServerType.Forge => InstallForge(),
-                ServerType.Fabric => InstallFabric(),
-                ServerType.Spigot => InstallSpigot(),
-                ServerType.Other => InstallCustomServerType(),
-                _ => InstallVanilla(),
-            };
-        }
-
-        /// <summary>
-        /// Scans the server path for a installer.jar and/or a start.jar<br />
-        /// If one is found it will set the start and/or install jar to it.
-        /// </summary>
-        public void ForceScan()
-        {
-            HasStartJar = Directory.GetFiles(ServerPath, "start.jar", SearchOption.TopDirectoryOnly).Length > 0;
-            HasInstallJar = Directory.GetFiles(ServerPath, "installer.jar", SearchOption.TopDirectoryOnly).Length > 0;
-        }
-        #endregion
         #region private
-
-        /// <summary>
-        /// Stops the server normally.<br />
-        /// if the function runs more than 3x <seealso cref="KillServer"/> will run instead.
-        /// </summary>
-        /// <param name="ittertions">The number of times this function has been run recursivly. if the function runs more than 3x <seealso cref="KillServer"/> will run instead.</param>
-        /// <returns>if the server was stopped successfully.</returns>
-        private bool StopServer(int ittertions = 0)
-        {
-            bool failed = false;
-            bool superFailed = false;
-            ServerProcess.StandardInput.WriteLine("stop");
-            System.Timers.Timer timer = new(15 * 1000);
-            timer.AutoReset = false;
-            timer.Start();
-            timer.Elapsed += (s, e) =>
-            {
-                if (ServerProcess == null)
-                {
-                    return;
-                }
-
-                if (!ServerProcess.HasExited && ittertions < 2)
-                {
-                    superFailed = false;
-                    failed = true;
-                }
-                else if (!ServerProcess.HasExited && ittertions > 2)
-                {
-                    failed = false;
-                    superFailed = true;
-                }
-            };
-            while (!ServerProcess.HasExited)
-            {
-                if (failed)
-                {
-                    return StopServer(ittertions + 1);
-                }
-
-                if (superFailed)
-                {
-                    return StopServer(StopMethod.Kill);
-                }
-            }
-            return true;
-
-        }
-        /// <summary>
-        /// Kills the server process.
-        /// </summary>
-        /// <returns>if the server process was killed successfully.</returns>
-        private bool KillServer()
-        {
-            try
-            {
-                if (ServerProcess != null)
-                {
-                    CurrentStatus = ServerStatus.Killing;
-                    ServerProcess.Kill(true);
-                }
-            }
-            catch
-            {
-                return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Stopps the server normally using <seealso cref="StopServer(int)"/> and the starts it normally using <seealso cref="StartServer"/>.
-        /// </summary>
-        /// <returns>returns if the server was restarted successfully.</returns>
-        private bool RestartServer()
-        {
-            CurrentStatus = ServerStatus.Restarting;
-            if (StopServer())
-            {
-                return StartServer();
-            }
-
-            return false;
-        }
-
 
         /// <summary>
         /// Installs custom jar server.
@@ -600,26 +454,13 @@ namespace OlegMC.REST_API.Model
         {
             return StartServer();
         }
-        /// <summary>
-        /// Installs a spigot based server (<seealso cref="ServerType.Spigot"/>) using start.jar.
-        /// </summary>
-        /// <returns>if the server was installed correctly.</returns>
-        private bool InstallSpigot()
-        {
-            if (!HasStartJar && HasInstallJar)
-            {
-                File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
-            }
 
-            return StartServer();
-        }
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <returns>if the server was installed correctly.</returns>
         private bool InstallFabric()
         {
-
             ServerProcess = new()
             {
                 StartInfo = new()
@@ -653,6 +494,7 @@ namespace OlegMC.REST_API.Model
             };
             return true;
         }
+
         /// <summary>
         /// Installs a forge server using the start.jar
         /// </summary>
@@ -712,6 +554,21 @@ namespace OlegMC.REST_API.Model
                 return true;
             }
         }
+
+        /// <summary>
+        /// Installs a spigot based server (<seealso cref="ServerType.Spigot"/>) using start.jar.
+        /// </summary>
+        /// <returns>if the server was installed correctly.</returns>
+        private bool InstallSpigot()
+        {
+            if (!HasStartJar && HasInstallJar)
+            {
+                File.Move(Path.Combine(ServerPath, "installer.jar"), Path.Combine(ServerPath, "start.jar"));
+            }
+
+            return StartServer();
+        }
+
         /// <summary>
         /// Installs a vanilla server using the start.jar
         /// </summary>
@@ -724,6 +581,154 @@ namespace OlegMC.REST_API.Model
             }
 
             return StartServer();
+        }
+
+        /// <summary>
+        /// Kills the server process.
+        /// </summary>
+        /// <returns>if the server process was killed successfully.</returns>
+        private bool KillServer()
+        {
+            try
+            {
+                if (ServerProcess != null)
+                {
+                    CurrentStatus = ServerStatus.Killing;
+                    ServerProcess.Kill(true);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private void MonitorServerOutput()
+        {
+            string[] search_cmds = { @"Starting minecraft server version", @"Loading for game Minecraft" };
+            if (ServerProperties.GetByName("server-port") != null && int.TryParse(ServerProperties.GetByName("server-port").Value, out int port))
+            {
+                Task.Run(async () =>
+                {
+                    if (await Networking.IsPortOpen(port))
+                    {
+                        await Networking.ClosePort(port);
+                    }
+                }).Wait();
+            }
+            CurrentStatus = ServerStatus.Offline;
+            ServerProcess = null;
+            if (ConsoleLog.Contains(@"Error: A JNI error has occurred, please check your installation and try again"))
+            {
+                JavaVersion = 16;
+                StartServer();
+            }
+            foreach (string cmd in search_cmds)
+            {
+                if (ConsoleLog.Contains(cmd))
+                {
+                    if (int.Parse(ConsoleLog[ConsoleLog.IndexOf(cmd)].Split(cmd)[^1].Split('.')[1].Replace(".", "")) >= 16)
+                    {
+                        JavaVersion = 16;
+                    }
+                    else
+                    {
+                        JavaVersion = 8;
+                    }
+
+                    StartServer();
+                    break;
+                }
+            }
+        }
+
+        private void MonitorServerOutput(string text)
+        {
+            if (!ServerProcess.HasExited)
+            {
+                ConsoleLog.Add($"{text}");
+                switch (text)
+                {
+                    case string a when (a.Contains("joined the game") || a.Contains("left the game")):
+                        UpdatePlayersOnline();
+                        break;
+
+                    case string a when (CurrentStatus == ServerStatus.Starting && a.Contains(")! For help, type \"help\"")):
+                        CurrentStatus = ServerStatus.Online;
+                        break;
+
+                    case string a when a.Contains("Saving the game"):
+                        CurrentStatus = ServerStatus.Saving;
+                        break;
+
+                    case string a when a.Contains("Saved the game"):
+                        CurrentStatus = PreviousStatus;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stopps the server normally using <seealso cref="StopServer(int)"/> and the starts it normally using <seealso cref="StartServer"/>.
+        /// </summary>
+        /// <returns>returns if the server was restarted successfully.</returns>
+        private bool RestartServer()
+        {
+            CurrentStatus = ServerStatus.Restarting;
+            if (StopServer())
+            {
+                return StartServer();
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Stops the server normally.<br />
+        /// if the function runs more than 3x <seealso cref="KillServer"/> will run instead.
+        /// </summary>
+        /// <param name="ittertions">The number of times this function has been run recursivly. if the function runs more than 3x <seealso cref="KillServer"/> will run instead.</param>
+        /// <returns>if the server was stopped successfully.</returns>
+        private bool StopServer(int ittertions = 0)
+        {
+            bool failed = false;
+            bool superFailed = false;
+            ServerProcess.StandardInput.WriteLine("stop");
+            Timer timer = new(15 * 1000);
+            timer.AutoReset = false;
+            timer.Start();
+            timer.Elapsed += (s, e) =>
+            {
+                if (ServerProcess == null)
+                {
+                    return;
+                }
+
+                if (!ServerProcess.HasExited && ittertions < 2)
+                {
+                    superFailed = false;
+                    failed = true;
+                }
+                else if (!ServerProcess.HasExited && ittertions > 2)
+                {
+                    failed = false;
+                    superFailed = true;
+                }
+            };
+            while (!ServerProcess.HasExited)
+            {
+                if (failed)
+                {
+                    return StopServer(ittertions + 1);
+                }
+
+                if (superFailed)
+                {
+                    return StopServer(StopMethod.Kill);
+                }
+            }
+            return true;
         }
 
         private void UpdatePlayersOnline()
@@ -741,13 +746,10 @@ namespace OlegMC.REST_API.Model
                 }
             }
             CurrentPlayerCount = 0;
-
         }
 
-        #endregion
-        #endregion
+        #endregion private
 
-
-
+        #endregion Functions
     }
 }

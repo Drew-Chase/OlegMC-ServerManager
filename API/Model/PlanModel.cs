@@ -5,21 +5,23 @@
     /// </summary>
     public class PlanModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// The Plan Name.
         /// </summary>
         public virtual string Name { get; }
+
         /// <summary>
         /// The ammount of ram allocated to each plan.
         /// </summary>
         public virtual int RAM { get; }
+
         public virtual int MaxBackups { get; set; }
 
         /// <summary>
         /// The user accessing the server console
         /// </summary>
         public virtual string Username { get; private set; }
+
         public PlanModel(string username)
         {
             Username = username;
@@ -39,6 +41,7 @@
             };
         }
     }
+
     /// <summary>
     /// A basic plan
     /// </summary>
@@ -47,11 +50,12 @@
         public override string Name => "BYOS";
         public override int RAM => 4;
         public override int MaxBackups { get; set; }
+
         public BYOSPlan(string username) : base(username)
         {
-
         }
     }
+
     /// <summary>
     /// A basic plan
     /// </summary>
@@ -60,11 +64,12 @@
         public override string Name => "Basic";
         public override int RAM => 4;
         public override int MaxBackups => 5;
+
         public BasicPlan(string username) : base(username)
         {
-
         }
     }
+
     /// <summary>
     /// The Intermidate Plan
     /// </summary>
@@ -76,9 +81,9 @@
 
         public IntermidatePlan(string username) : base(username)
         {
-
         }
     }
+
     /// <summary>
     /// The Advanced Plan
     /// </summary>
@@ -87,11 +92,12 @@
         public override string Name => "Advanced";
         public override int RAM => 8;
         public override int MaxBackups => 15;
+
         public AdvancedPlan(string username) : base(username)
         {
-
         }
     }
+
     /// <summary>
     /// The PRO Plan
     /// </summary>
@@ -100,11 +106,12 @@
         public override string Name => "PRO";
         public override int RAM => 10;
         public override int MaxBackups => 20;
+
         public PROPlan(string username) : base(username)
         {
-
         }
     }
+
     /// <summary>
     /// The Elite Plan
     /// </summary>
@@ -116,7 +123,6 @@
 
         public ElitePlan(string username) : base(username)
         {
-
         }
     }
 }

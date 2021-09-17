@@ -1,10 +1,10 @@
-﻿using ChaseLabs.CLLogger.Interfaces;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
 using System.IO;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Controllers
 {
@@ -12,7 +12,6 @@ namespace OlegMC.REST_API.Controllers
     [Route("/server/")]
     public class ServerController : ControllerBase
     {
-        private static readonly ILog log = Global.Logger;
         [HttpGet]
         public IActionResult Index()
         {
@@ -22,7 +21,9 @@ namespace OlegMC.REST_API.Controllers
                 StartOnBoot = RegistryHelper.ShouldStartOnBoot(),
             });
         }
+
         #region Updater
+
         [HttpGet("check-for-updates")]
         public IActionResult CheckForUpdates()
         {
@@ -31,13 +32,16 @@ namespace OlegMC.REST_API.Controllers
                 needsUpdate = UpdateManager.CheckForUpdates()
             });
         }
+
         [HttpPost("update/{force?}")]
         public IActionResult Update([FromForm] bool? force)
         {
             UpdateManager.Update(force.HasValue && force.Value);
             return Ok(new { message = "If an update is avaliable, the system will update." });
         }
-        #endregion
+
+        #endregion Updater
+
         #region Themes
 
         [HttpPost("{username}/settings/theme")]
@@ -49,10 +53,11 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
 
-            server.config.GetConfigByKey("theme").Value = theme;
+            server.Config.GetConfigByKey("theme").Value = theme;
 
             return Ok(new { message = $"Saved theme as {theme}" });
         }
+
         [HttpGet("{username}/settings/theme/")]
         public IActionResult GetTheme(string username)
         {
@@ -62,7 +67,7 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
 
-            return new JsonResult(new { theme = server.config.GetConfigByKey("theme").Value });
+            return new JsonResult(new { theme = server.Config.GetConfigByKey("theme").Value });
         }
 
         [HttpPost("{username}/settings/theme/upload")]
@@ -70,8 +75,11 @@ namespace OlegMC.REST_API.Controllers
         {
             return Ok();
         }
-        #endregion
+
+        #endregion Themes
+
         #region StartOnBoot
+
         [HttpPost("settings/startonboot")]
         public IActionResult StartOnBoot([FromForm] bool start)
         {
@@ -84,9 +92,10 @@ namespace OlegMC.REST_API.Controllers
                 RegistryHelper.DisableStartOnBoot();
             }
 
-            log.Debug($"Start on Boot set to {start}");
+            Logger.Debug($"Start on Boot set to {start}");
             return Ok(new { message = $"Start on Boot set to {start}" });
         }
+
         [HttpGet("settings/startonboot")]
         public IActionResult GetStartOnBoot()
         {
@@ -95,7 +104,10 @@ namespace OlegMC.REST_API.Controllers
                 StartOnBoot = RegistryHelper.ShouldStartOnBoot()
             });
         }
-        #endregion
+
+        #endregion StartOnBoot
+
+        #region Logs
         [HttpGet("logs")]
         public IActionResult DownloadLogs()
         {
@@ -108,5 +120,6 @@ namespace OlegMC.REST_API.Controllers
             Directory.GetParent(Global.Paths.Logs).Delete(true);
             return Ok(new { message = "Logs Deleted" });
         }
+        #endregion
     }
 }

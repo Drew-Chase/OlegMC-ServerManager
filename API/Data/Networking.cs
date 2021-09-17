@@ -5,14 +5,12 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Data
 {
     public class Networking
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Global.Logger;
-        public static object Thead { get; private set; }
-
         public static async Task OpenPort(int port, string description = "OlegMC Server Manager")
         {
             try
@@ -26,13 +24,14 @@ namespace OlegMC.REST_API.Data
 
                 map = new(Protocol.Udp, port, port, description);
                 await device.CreatePortMapAsync(map);
-                log.Debug($"Created {map}");
+                Logger.Debug($"Created {map}");
             }
             catch (Exception e)
             {
-                log.Error(e);
+                Logger.Error(e);
             }
         }
+
         public static async Task ClosePort(int port)
         {
             NatDiscoverer nat = new();
@@ -43,12 +42,13 @@ namespace OlegMC.REST_API.Data
             {
                 if (mapping.PrivatePort == port)
                 {
-                    log.Warn($"Deleting {mapping}");
+                    Logger.Warn($"Deleting {mapping}");
 
                     await device.DeletePortMapAsync(mapping);
                 }
             }
         }
+
         public static async Task<bool> IsPortOpen(int port)
         {
             NatDiscoverer nat = new();
@@ -73,11 +73,11 @@ namespace OlegMC.REST_API.Data
 
             foreach (Mapping mapping in await device.GetAllMappingsAsync())
             {
-                log.Debug($"OPENED => {mapping}");
+                Logger.Debug($"OPENED => {mapping}");
             }
         }
 
-        public static System.Net.IPAddress GetPublicIP()
+        public static IPAddress GetPublicIP()
         {
             try
             {
@@ -91,7 +91,7 @@ namespace OlegMC.REST_API.Data
                 }
                 catch
                 {
-                    throw new System.Net.WebException("Couldn't find router using either Upnp or Pmp protocols.");
+                    throw new WebException("Couldn't find router using either Upnp or Pmp protocols.");
                 }
             }
         }

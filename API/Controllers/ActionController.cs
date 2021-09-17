@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OlegMC.REST_API.Data;
 using OlegMC.REST_API.Model;
 using System;
 using System.IO;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Controllers
 {
@@ -13,7 +13,6 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/")]
     public class ActionController : ControllerBase
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Installs a server based on a specific loader, See: <seealso cref="ServerType"/>
         /// </summary>
@@ -42,6 +41,7 @@ namespace OlegMC.REST_API.Controllers
 
             return Ok();
         }
+
         /// <summary>
         /// Starts the server
         /// </summary>
@@ -86,6 +86,7 @@ namespace OlegMC.REST_API.Controllers
             server.StopServer(StopMethod.Normal);
             return Ok();
         }
+
         /// <summary>
         /// Kills the servers process
         /// </summary>
@@ -103,6 +104,7 @@ namespace OlegMC.REST_API.Controllers
             server.StopServer(StopMethod.Kill);
             return Ok();
         }
+
         /// <summary>
         /// Stops the server normally, then restarts it.
         /// </summary>
@@ -120,6 +122,7 @@ namespace OlegMC.REST_API.Controllers
             server.StopServer(StopMethod.Restart);
             return Ok();
         }
+
         /// <summary>
         /// Stops the server normally, then backs it up.
         /// </summary>
@@ -136,7 +139,7 @@ namespace OlegMC.REST_API.Controllers
 
             if (server.StopServer(StopMethod.Normal))
             {
-                BackupListModel.CreateManualBackup(server);
+                BackupListModel.CreateManualBackupAsync(server);
             }
 
             return Ok();
@@ -177,7 +180,7 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
 
-            BackupListModel.CreateManualBackup(server, full);
+            BackupListModel.CreateManualBackupAsync(server, full);
             if (intervals.HasValue)
             {
                 server.Backups.CreateBackupSchedule(intervals.Value);
@@ -185,6 +188,7 @@ namespace OlegMC.REST_API.Controllers
 
             return Ok(new { message = "Backup Created!" });
         }
+
         /// <summary>
         /// Schedules a backup for every <b>X</b> minutes
         /// </summary>
@@ -201,10 +205,11 @@ namespace OlegMC.REST_API.Controllers
             }
 
             server.Backups.CreateBackupSchedule(intervals);
-            server.config.GetConfigByKey("backup_intervals").Value = intervals.ToString();
-            server.config.GetConfigByKey("backups_enabled").Value = true.ToString();
+            server.Config.GetConfigByKey("backup_intervals").Value = intervals.ToString();
+            server.Config.GetConfigByKey("backups_enabled").Value = true.ToString();
             return Ok(new { message = $"backup scheduled for every {intervals} minutes" });
         }
+
         /// <summary>
         /// Stops the backup schedule
         /// </summary>
@@ -221,10 +226,11 @@ namespace OlegMC.REST_API.Controllers
 
             server.Backups.StopBackupSchedule();
 
-            server.config.GetConfigByKey("backup_intervals").Value = 0.ToString();
-            server.config.GetConfigByKey("backups_enabled").Value = false.ToString();
+            server.Config.GetConfigByKey("backup_intervals").Value = 0.ToString();
+            server.Config.GetConfigByKey("backups_enabled").Value = false.ToString();
             return Ok(new { message = "Backup Schedule Canceled" });
         }
+
         /// <summary>
         /// Downloads a server installer for specific version and loader
         /// </summary>
@@ -244,7 +250,6 @@ namespace OlegMC.REST_API.Controllers
             server.ServerType = (ServerType)Enum.Parse(typeof(ServerType), loader);
             try
             {
-
                 server.DownloadServer(version);
             }
             catch
@@ -298,15 +303,16 @@ namespace OlegMC.REST_API.Controllers
             }
             string levelName = server.ServerProperties.GetByName("level-name").Value;
             levelName = string.IsNullOrWhiteSpace(levelName) ? "world" : levelName;
-            string zipArchive = System.IO.Path.Combine(Global.Functions.GetUniqueTempFolder(username), "download-world.zip");
+            string zipArchive = System.IO.Path.Combine(Functions.GetUniqueTempFolder(username), "download-world.zip");
             if (System.IO.File.Exists(zipArchive))
             {
                 System.IO.File.Delete(zipArchive);
             }
 
             System.IO.Compression.ZipFile.CreateFromDirectory(System.IO.Path.Combine(server.ServerPath, levelName), zipArchive);
-            return new FileStreamResult(new System.IO.FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
+            return new FileStreamResult(new FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
         }
+
         [HttpGet("{username}/download/server")]
         public IActionResult DownloadServer(string username)
         {
@@ -315,14 +321,14 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            string zipArchive = System.IO.Path.Combine(Global.Functions.GetUniqueTempFolder(username), "download-server.zip");
+            string zipArchive = System.IO.Path.Combine(Functions.GetUniqueTempFolder(username), "download-server.zip");
             if (System.IO.File.Exists(zipArchive))
             {
                 System.IO.File.Delete(zipArchive);
             }
 
             System.IO.Compression.ZipFile.CreateFromDirectory(server.ServerPath, zipArchive);
-            return new FileStreamResult(new System.IO.FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
+            return new FileStreamResult(new FileStream(zipArchive, System.IO.FileMode.Open), "application/zip");
         }
 
         [HttpGet("{username}/download/backup/{index}")]
@@ -333,8 +339,9 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            return new FileStreamResult(new System.IO.FileStream(BackupListModel.GetBackups(server)[index - 1].FilePath, System.IO.FileMode.Open), "application/zip");
+            return new FileStreamResult(new FileStream(BackupListModel.GetBackups(server)[index - 1].FilePath, System.IO.FileMode.Open), "application/zip");
         }
+
         [HttpGet("{username}/backup/remove/{index?}")]
         public IActionResult RemoveBackup(string username, int? index)
         {
@@ -356,6 +363,7 @@ namespace OlegMC.REST_API.Controllers
             }
             return Ok(new { message = "Removed Successfully!" });
         }
+
         [HttpGet("{username}/datapack/remove/{index?}")]
         public IActionResult RemoveDatapack(string username, int? index)
         {
@@ -376,8 +384,9 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            return new FileStreamResult(new System.IO.FileStream(DatapackListModel.GetServerInstance(server).Datapacks[index - 1].Path, System.IO.FileMode.Open), "application/zip");
+            return new FileStreamResult(new FileStream(DatapackListModel.GetServerInstance(server).Datapacks[index - 1].Path, System.IO.FileMode.Open), "application/zip");
         }
+
         [HttpGet("{username}/clean")]
         public IActionResult CleanServer(string username)
         {
@@ -386,18 +395,18 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            Global.Functions.GetUniqueTempFolder(username);
+            Functions.GetUniqueTempFolder(username);
             int port = int.Parse(server.ServerProperties.GetByName("server-port").Value);
-            System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), true);
+            System.IO.File.Move(Path.Combine(server.ServerPath, "olegmc.server"), Path.Combine(Functions.GetUniqueTempFolder(username), "olegmc.server"), true);
             if (Directory.Exists(server.ServerPath))
             {
                 Directory.Delete(server.ServerPath, true);
             }
 
-            System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
+            System.IO.File.Move(Path.Combine(Functions.GetUniqueTempFolder(username), "olegmc.server"), Path.Combine(Directory.CreateDirectory(server.ServerPath).FullName, "olegmc.server"), true);
             server.AcceptEULA();
             server.ServerProperties.Update("server-port", port);
-            Global.Functions.DestroyUniqueTempFolder(username);
+            Functions.DestroyUniqueTempFolder(username);
             return Ok(new { message = "Cleaned Successfully" });
         }
     }

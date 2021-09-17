@@ -8,7 +8,6 @@ namespace OlegMC.REST_API
 {
     public class Startup
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();

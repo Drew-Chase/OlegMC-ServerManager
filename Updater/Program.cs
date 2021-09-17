@@ -5,12 +5,12 @@ namespace OlegMC.Updater
 {
     internal class Program
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "updater")).FullName, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
+        private static readonly ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName, "Logs", "updater")).FullName, "latest.Logger")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
 
         private static void Main(string[] args)
         {
             Console.Title = "OlegMC Updater";
-            log.Info("Updating OlegMC - Server Manager");
+            Logger.Info("Updating OlegMC - Server Manager");
             System.Threading.Thread.Sleep(5000);
             string path = string.Empty;
             if (args.Length > 0)
@@ -21,7 +21,7 @@ namespace OlegMC.Updater
                     if (arg.StartsWith("-path="))
                     {
                         path = arg.Replace("-path=", "");
-                        log.Debug($"PATH Identified as \"{path}\"");
+                        Logger.Debug($"PATH Identified as \"{path}\"");
                     }
                 }
                 if (!string.IsNullOrWhiteSpace(path))
@@ -69,7 +69,7 @@ namespace OlegMC.Updater
             }
             else
             {
-                log.Error("Path is Needed");
+                Logger.Error("Path is Needed");
                 Console.Write("Press Enter To Exit...");
                 Console.ReadLine();
             }

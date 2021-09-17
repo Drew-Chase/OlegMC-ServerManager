@@ -10,7 +10,6 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/Post/")]
     public class PostActionController : ControllerBase
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Creates a server for a user.
         /// </summary>
@@ -32,6 +31,7 @@ namespace OlegMC.REST_API.Controllers
             ServersListModel.GetInstance.Add(new(planModel));
             return Ok();
         }
+
         /// <summary>
         /// Saves Server Properties value. See: <seealso cref="ServerPropertiesModel"/>
         /// </summary>
@@ -65,6 +65,7 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = $"Something went wrong while trying to update \"{name}\"! Please try again later." });
             }
         }
+
         [HttpPost("java_version")]
         public IActionResult SwitchJavaVersion([FromForm] string username, [FromForm] int version)
         {
@@ -73,8 +74,8 @@ namespace OlegMC.REST_API.Controllers
             {
                 return BadRequest(new { message = $"User {username} does NOT have a server created!" });
             }
-            server.Java_Version = version;
-            return Ok(new { version = server.Java_Version });
+            server.JavaVersion = version;
+            return Ok(new { version = server.JavaVersion });
         }
 
         [HttpPost("ram")]
@@ -87,7 +88,7 @@ namespace OlegMC.REST_API.Controllers
             }
             if (server.ServerPlan.Name == "BYOS")
             {
-                server.Max_Ram = ram;
+                server.MaxRam = ram;
                 return Ok(new { message = $"Ram set to {ram}" });
             }
             else
@@ -107,7 +108,7 @@ namespace OlegMC.REST_API.Controllers
             if (server.ServerPlan.Name.ToLower().Equals("byos"))
             {
                 server.ServerPlan.MaxBackups = backups;
-                server.config.GetConfigByKey("max_backups").Value = backups.ToString();
+                server.Config.GetConfigByKey("max_backups").Value = backups.ToString();
                 return Ok(new { message = $"Max Backups set to {backups}" });
             }
             else

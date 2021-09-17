@@ -14,6 +14,7 @@ namespace OlegMC.REST_API.Data
         Latest,
         Legacy
     }
+
     /// <summary>
     /// A List of static global variables.
     /// </summary>
@@ -22,23 +23,25 @@ namespace OlegMC.REST_API.Data
         public static int API_PORT => 5077;
         public static bool IsLoggedIn => File.Exists(Path.Combine(Paths.Root, "auth"));
 #if DEBUG
-        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
+        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.Logger")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%");
 #else
-        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.log")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%").SetMinimumLogType(ChaseLabs.CLLogger.Lists.LogTypes.Info);
+        public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.Logger")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%").SetMinimumLogType(ChaseLabs.CLLogger.Lists.LogTypes.Info);
 #endif
+
         public static class Paths
         {
             /// <summary>
             /// Path to the .exe file
             /// </summary>
             public static string ExecutingBinary => Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, $"{AppDomain.CurrentDomain.FriendlyName}{(OperatingSystem.IsWindows() ? ".exe" : "")}");
+
             /// <summary>
             /// The root directory of the application
             /// </summary>
             public static string Root => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "OlegMC")).FullName;
 
             /// <summary>
-            /// Directory that contains all the log files
+            /// Directory that contains all the Logger files
             /// </summary>
             public static string Logs => Directory.CreateDirectory(Path.Combine(Root, "Logs", "api")).FullName;
 
@@ -60,7 +63,6 @@ namespace OlegMC.REST_API.Data
 
         public static class Functions
         {
-
             public static string SafelyCreateZipFromDirectory(string sourceDirectoryName, string zipFilePath)
             {
                 if (File.Exists(zipFilePath))
@@ -89,8 +91,8 @@ namespace OlegMC.REST_API.Data
                     }
                 }
                 return zipFilePath;
-
             }
+
             public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
             {
                 DirectoryInfo dir = new(sourceDirName);
@@ -133,6 +135,7 @@ namespace OlegMC.REST_API.Data
 
                 return path;
             }
+
             public static void DestroyUniqueTempFolder(string username)
             {
                 Directory.Delete(GetUniqueTempFolder(username), true);
@@ -152,7 +155,6 @@ namespace OlegMC.REST_API.Data
                 }
                 return path;
             }
-
 
             public static async void GenRuntime(bool force = false)
             {
@@ -193,7 +195,6 @@ namespace OlegMC.REST_API.Data
                 });
             }
 
-
             public static void LogIn(string username, string password, int port, string protocol)
             {
                 string token = "";
@@ -216,6 +217,7 @@ namespace OlegMC.REST_API.Data
 
                 SyncInfoWithServer();
             }
+
             public static void SyncInfoWithServer(bool force = false)
             {
                 string cfg = Path.Combine(Paths.Root, "auth");
@@ -256,6 +258,7 @@ namespace OlegMC.REST_API.Data
                     Logger.Debug("Updated Server Locations");
                 }
             }
+
             public static void LogOut()
             {
                 if (IsLoggedIn)
@@ -263,7 +266,6 @@ namespace OlegMC.REST_API.Data
                     File.Delete(Path.Combine(Paths.Root, "auth"));
                 }
             }
-
         }
     }
 }

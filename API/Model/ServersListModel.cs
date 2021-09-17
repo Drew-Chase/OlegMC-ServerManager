@@ -1,17 +1,19 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using OlegMC.REST_API.Data;
 using System.Collections.Generic;
 using System.Linq;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Model
 {
     public class ServersListModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         private readonly List<ServerModel> servers;
         public List<int> Ports { get; private set; }
+
         #region Singleton
+
         private static ServersListModel _instance;
+
         public static ServersListModel GetInstance
         {
             get
@@ -24,7 +26,8 @@ namespace OlegMC.REST_API.Model
                 return _instance;
             }
         }
-        #endregion
+
+        #endregion Singleton
 
         private ServersListModel()
         {
@@ -56,7 +59,7 @@ namespace OlegMC.REST_API.Model
         /// </summary>
         private void Find()
         {
-            string[] files = System.IO.Directory.GetFiles(Global.Paths.ServersPath, "olegmc.server", System.IO.SearchOption.AllDirectories);
+            string[] files = System.IO.Directory.GetFiles(Paths.ServersPath, "olegmc.server", System.IO.SearchOption.AllDirectories);
             for (int i = 0; i < files.Length; i++)
             {
                 string text = System.IO.File.ReadAllText(files[i]);

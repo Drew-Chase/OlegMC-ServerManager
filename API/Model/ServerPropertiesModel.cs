@@ -8,18 +8,20 @@ namespace OlegMC.REST_API.Model
     /// </summary>
     public class ServerPropertiesModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
-
         #region Variables
+
         #region public
+
         /// <summary>
         /// The path to the server.properties
         /// </summary>
         public string PATH { get; private set; }
+
         /// <summary>
         /// A List of all server properties
         /// </summary>
         public ServerPropertyModel[] Properties => Make();
+
         /// <summary>
         /// Creates a <seealso cref="ServerPropertyModel"/> array for all the server properties in the server.properties
         /// </summary>
@@ -52,6 +54,7 @@ namespace OlegMC.REST_API.Model
             }
             return value.ToArray();
         }
+
         /// <summary>
         /// Gets the server property based on the property name.
         /// </summary>
@@ -69,6 +72,7 @@ namespace OlegMC.REST_API.Model
             }
             return null;
         }
+
         /// <summary>
         /// Initializes the <seealso cref="ServerPropertiesModel"/> using the server directory
         /// </summary>
@@ -78,8 +82,10 @@ namespace OlegMC.REST_API.Model
         {
             return new(Path.Combine(server_path, "server.properties"));
         }
-        #endregion
-        #endregion
+
+        #endregion public
+
+        #endregion Variables
 
         /// <summary>
         /// Private Constructor for the <seealso cref="ServerPropertiesModel"/>
@@ -102,7 +108,6 @@ namespace OlegMC.REST_API.Model
                 }
                 catch (IOException)
                 {
-
                 }
                 finally
                 {
@@ -115,8 +120,9 @@ namespace OlegMC.REST_API.Model
                 }
             }
         }
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void Update()
         {
@@ -162,29 +168,39 @@ namespace OlegMC.REST_API.Model
             File.WriteAllText(PATH, after);
         }
     }
+
     /// <summary>
     /// Server Property Object
     /// </summary>
     public class ServerPropertyModel
     {
         #region Variables
+
         #region public
+
         /// <summary>
         /// Name of the property.
         /// </summary>
         public string Name { get; private set; }
+
         /// <summary>
         /// The properties value.
         /// </summary>
         public string Value { get; private set; }
+
         /// <summary>
         /// If the property can be changed.
         /// </summary>
         public bool Protected { get; private set; }
-        #endregion
-        #endregion
+
+        #endregion public
+
+        #endregion Variables
+
         #region Functions
+
         #region public
+
         /// <summary>
         /// The Constructor for the Server Property
         /// </summary>
@@ -196,6 +212,7 @@ namespace OlegMC.REST_API.Model
             Value = value;
             Protected = isProtected;
         }
+
         /// <summary>
         /// Creates a <seealso cref="ServerPropertyModel"/> based on a line from the server.properties file
         /// </summary>
@@ -207,6 +224,7 @@ namespace OlegMC.REST_API.Model
             string value = line.Split('=')[1].Replace("=", "");
             return new(name, value, (name.Equals("server-port") || name.Equals("server-ip")));
         }
+
         public override bool Equals(object obj)
         {
             if (!obj.GetType().Equals(typeof(ServerPropertyModel)))
@@ -227,7 +245,9 @@ namespace OlegMC.REST_API.Model
         {
             return base.GetHashCode();
         }
-        #endregion
-        #endregion
+
+        #endregion public
+
+        #endregion Functions
     }
 }

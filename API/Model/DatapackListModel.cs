@@ -4,9 +4,9 @@ namespace OlegMC.REST_API.Model
 {
     public class DatapackListModel
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         public DatapackModel[] Datapacks { get; private set; }
         private readonly ServerModel server;
+
         public static DatapackListModel GetServerInstance(ServerModel server)
         {
             return new DatapackListModel(server, GetList(server));
@@ -34,6 +34,7 @@ namespace OlegMC.REST_API.Model
             File.Move(_temp_path, Path.Combine(server.ServerPath, server.ServerProperties.GetByName("level-name").Value, "datapacks", new FileInfo(_temp_path).Name), true);
             Datapacks = GetList(server);
         }
+
         public void Remove(int? id)
         {
             if (id.HasValue)

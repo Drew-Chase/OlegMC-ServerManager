@@ -5,6 +5,7 @@ using OlegMC.REST_API.Model;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using static OlegMC.REST_API.Data.Global;
 
 namespace OlegMC.REST_API.Controllers
 {
@@ -15,7 +16,6 @@ namespace OlegMC.REST_API.Controllers
     [Route("/Action/Upload/")]
     public class UploadActionController : ControllerBase
     {
-        private static readonly ChaseLabs.CLLogger.Interfaces.ILog log = Data.Global.Logger;
         /// <summary>
         /// Uploads the server jar file and coppies it to the server path.
         /// </summary>
@@ -32,13 +32,12 @@ namespace OlegMC.REST_API.Controllers
             }
             if (file.ContentType.Equals("application/java-archive") || file.ContentType.Equals("application/octet-stream"))
             {
-
                 FileStream stream = new(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "start.jar"), FileMode.Create);
                 file.CopyTo(stream);
                 stream.Flush();
                 stream.Dispose();
                 stream.Close();
-                System.IO.File.Move(Path.Combine(Global.Functions.GetUniqueTempFolder(username), "start.jar"), Path.Combine(server.ServerPath, "start.jar"), true);
+                System.IO.File.Move(Path.Combine(Functions.GetUniqueTempFolder(username), "start.jar"), Path.Combine(server.ServerPath, "start.jar"), true);
                 Global.Functions.DestroyUniqueTempFolder(username);
                 return Ok();
             }
@@ -179,7 +178,6 @@ namespace OlegMC.REST_API.Controllers
             }
         }
 
-
         [HttpPost("{username}/world"), DisableRequestSizeLimit]
         public IActionResult UploadWorld(string username, IFormFile file)
         {
@@ -217,7 +215,6 @@ namespace OlegMC.REST_API.Controllers
                 return BadRequest(new { message = "File needs to be a zip archive" });
             }
         }
-
 
         [HttpPost("{username}/server"), DisableRequestSizeLimit]
         public IActionResult UploadServer(string username, IFormFile file)
