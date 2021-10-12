@@ -28,6 +28,7 @@ namespace OlegMC.REST_API.Data
         public static ChaseLabs.CLLogger.Interfaces.ILog Logger = ChaseLabs.CLLogger.LogManager.Init().SetLogDirectory(Path.Combine(Paths.Logs, "latest.Logger")).SetPattern("[%TYPE%: %DATE%]: %MESSAGE%").SetMinimumLogType(ChaseLabs.CLLogger.Lists.LogTypes.Info);
 #endif
 
+
         public static class Paths
         {
             /// <summary>
@@ -53,7 +54,7 @@ namespace OlegMC.REST_API.Data
             /// <summary>
             /// The path to the java runtime executables.
             /// </summary>
-            public static string Runtime => Directory.CreateDirectory(Path.Combine(Root, "Runtime", OperatingSystem.IsWindows() ? "Win64" : OperatingSystem.IsLinux() ? "Linux64" : "Unix64")).FullName;
+            public static string Runtime => Directory.CreateDirectory(Path.Combine(Root, "Runtime", Environment.OSVersion.Platform.ToString())).FullName;
 
             /// <summary>
             /// The path to the server backup directories

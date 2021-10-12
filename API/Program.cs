@@ -71,7 +71,7 @@ namespace OlegMC.REST_API
                     }
                 }
             }
-            Global.Functions.GenRuntime();
+            Functions.GenRuntime();
             Global.Functions.SyncInfoWithServer();
             if (OperatingSystem.IsWindows())
             {
@@ -83,13 +83,8 @@ namespace OlegMC.REST_API
             }
             if (!Global.IsLoggedIn)
             {
-                new Process()
-                {
-                    StartInfo = new ProcessStartInfo()
-                    {
-                        FileName = $"http://127.0.0.1:{Global.API_PORT}"
-                    }
-                }.Start();
+                ProcessStartInfo info = new();
+                Process.Start(OperatingSystem.IsWindows() ? $"http://127.0.0.1:{Global.API_PORT}" : OperatingSystem.IsLinux() ? $"xdg-open" : "open", !OperatingSystem.IsWindows() ? $"http://127.0.0.1:{Global.API_PORT}" : "");
             }
             _ = ServersListModel.GetInstance;
             CreateHostBuilder(args).Build().Run();
